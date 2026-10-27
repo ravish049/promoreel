@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 236" width="960" height="236" role="img" aria-label="How promoreel works: 1 your agent reads your app and writes flows and a script; 2 record the flows at phone size; 3 narrate: voice and captions, free and local; 4 Remotion renders a 1080 by 1920 reel">
+  <!-- solid boxes with their own fill, so the diagram reads on GitHub's light and dark themes alike -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8B949E"/>
+    </marker>
+    <style>
+      .box { fill: #0E1116; stroke: #3DDC97; stroke-width: 2; }
+      .num { fill: #3DDC97; }
+      .numtxt { fill: #0E1116; font: 700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .title { fill: #F2F0EA; font: 700 19px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .body { fill: #B8BDC4; font: 400 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .mono { fill: #3DDC97; font: 500 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <g transform="translate(8 8)">
+    <rect class="box" width="210" height="220" rx="18"/>
+    <circle class="num" cx="34" cy="36" r="17"/><text class="numtxt" x="34" y="42" text-anchor="middle">1</text>
+    <text class="title" x="60" y="43">Understand</text>
+    <text class="body" x="20" y="84">Your agent reads the</text>
+    <text class="body" x="20" y="104">README and routes, runs</text>
+    <text class="body" x="20" y="124">the app locally, proposes</text>
+    <text class="body" x="20" y="144">reel ideas, writes flows</text>
+    <text class="body" x="20" y="164">and the script.</text>
+    <text class="mono" x="20" y="200">promoreel repo</text>
+  </g>
+
+  <line x1="222" y1="118" x2="244" y2="118" stroke="#8B949E" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <g transform="translate(250 8)">
+    <rect class="box" width="210" height="220" rx="18"/>
+    <circle class="num" cx="34" cy="36" r="17"/><text class="numtxt" x="34" y="42" text-anchor="middle">2</text>
+    <text class="title" x="60" y="43">Record</text>
+    <text class="body" x="20" y="84">Chromium at phone size,</text>
+    <text class="body" x="20" y="104">filmed at 3× (1170×2532).</text>
+    <text class="body" x="20" y="124">Every tap and focus is</text>
+    <text class="body" x="20" y="144">logged with its time</text>
+    <text class="body" x="20" y="164">and position.</text>
+    <text class="mono" x="20" y="200">promoreel record</text>
+  </g>
+
+  <line x1="464" y1="118" x2="486" y2="118" stroke="#8B949E" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <g transform="translate(492 8)">
+    <rect class="box" width="210" height="220" rx="18"/>
+    <circle class="num" cx="34" cy="36" r="17"/><text class="numtxt" x="34" y="42" text-anchor="middle">3</text>
+    <text class="title" x="60" y="43">Narrate</text>
+    <text class="body" x="20" y="84">Kokoro or Chatterbox</text>
+    <text class="body" x="20" y="104">speak each line, locally.</text>
+    <text class="body" x="20" y="124">Whisper times every</text>
+    <text class="body" x="20" y="144">word. No API keys.</text>
+    <text class="mono" x="20" y="200">voice · captions</text>
+  </g>
+
+  <line x1="706" y1="118" x2="728" y2="118" stroke="#8B949E" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <g transform="translate(734 8)">
+    <rect class="box" width="210" height="220" rx="18"/>
+    <circle class="num" cx="34" cy="36" r="17"/><text class="numtxt" x="34" y="42" text-anchor="middle">4</text>
+    <text class="title" x="60" y="43">Render</text>
+    <text class="body" x="20" y="84">Remotion turns the spec</text>
+    <text class="body" x="20" y="104">into a 1080×1920 reel:</text>
+    <text class="body" x="20" y="124">zooms, ripples, captions,</text>
+    <text class="body" x="20" y="144">your brand's outro.</text>
+    <text class="mono" x="20" y="200">promoreel render</text>
+  </g>
+</svg>

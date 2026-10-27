@@ -1,0 +1,536 @@
+{
+  "id": "video-01",
+  "title": "Losing hours? Validate the client's sheet, then invoice",
+  "voice": {
+    "render": [
+      "chatterbox",
+      "af_heart",
+      "am_michael"
+    ],
+    "use": "chatterbox",
+    "dtype": "fp32",
+    "speed": 1.0,
+    "speedByVoice": {
+      "am_michael": 1.08
+    },
+    "chatterbox": {
+      "exaggeration": 0.55,
+      "cfgWeight": 0.45,
+      "seed": 7
+    },
+    "volume": 1
+  },
+  "captions": {
+    "model": "small.en",
+    "hideIn": []
+  },
+  "sfx": {
+    "tapVolume": 0.35
+  },
+  "transitionFrames": 12,
+  "photo": "brand/bg-loading-dock.jpg",
+  "look": {
+    "cards": "solid"
+  },
+  "lines": [
+    {
+      "id": "hook",
+      "say": "Quick question… | are you losing hours | between what you pay, and what you bill?",
+      "speed": 1.0,
+      "pauseMs": 380
+    },
+    {
+      "id": "cards",
+      "say": "Your client's sheet says thirty-eight. | But you paid your worker for forty.",
+      "text": "Your client's sheet says 38. But you paid your worker for 40.",
+      "speed": 1.03,
+      "pauseMs": 320
+    },
+    {
+      "id": "quiz",
+      "say": "So who eats those two hours?",
+      "text": "So who eats those 2 hours?",
+      "speed": 0.98
+    },
+    {
+      "id": "reveal",
+      "say": "Honestly? | Usually nobody notices. | Until month end.",
+      "speed": 1.02,
+      "pauseMs": 300
+    },
+    {
+      "id": "gps",
+      "say": "In Crew Dash, your hours come straight from GPS clock-in, | so you know yours are right.",
+      "text": "In CrewDash, your hours come straight from GPS clock-in, so you know yours are right.",
+      "speed": 1.04,
+      "pauseMs": 250
+    },
+    {
+      "id": "drop",
+      "say": "When the client's sheet comes in, | just drop it in, | and check it, day by day.",
+      "speed": 1.03,
+      "pauseMs": 240
+    },
+    {
+      "id": "diff",
+      "say": "Tuesday's off by two hours, | so you decide: | bill the client's hours, or dispute it.",
+      "text": "Tuesday's off by 2 hours, so you decide: bill the client's hours, or dispute it.",
+      "speed": 1.04,
+      "pauseMs": 260
+    },
+    {
+      "id": "validate",
+      "say": "Then validate the week.",
+      "speed": 0.98
+    },
+    {
+      "id": "invoice",
+      "say": "And your invoice fills itself in, | straight from the validated week.",
+      "speed": 1.0,
+      "pauseMs": 260,
+      "seed": 42
+    }
+  ],
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "hook",
+      "headline": "Losing hours?",
+      "cardsLine": "cards",
+      "cards": [
+        {
+          "label": "Client’s sheet says",
+          "from": 40,
+          "value": 38,
+          "unit": "h",
+          "icon": "file-text"
+        },
+        {
+          "label": "You paid your worker",
+          "value": 40,
+          "unit": "h",
+          "atWord": "But",
+          "glyph": "$"
+        }
+      ],
+      "badge": {
+        "text": "−2 h",
+        "atWord": "40."
+      },
+      "lines": [
+        {
+          "id": "hook"
+        },
+        {
+          "id": "cards",
+          "gapBeforeMs": 400
+        }
+      ],
+      "leadMs": 250,
+      "tailMs": 300
+    },
+    {
+      "id": "quiz",
+      "type": "quiz",
+      "lines": [
+        {
+          "id": "quiz"
+        },
+        {
+          "id": "reveal",
+          "gapBeforeMs": 500
+        }
+      ],
+      "leadMs": 300,
+      "tailMs": 250,
+      "question": "Who eats the 2 hours?",
+      "options": [
+        "You",
+        "The client",
+        "Nobody notices…"
+      ],
+      "answer": 2,
+      "revealLine": "reveal",
+      "foot": "…until month end.",
+      "footAtWord": "Until",
+      "highlight": [
+        "2",
+        "hours?"
+      ]
+    },
+    {
+      "id": "phone",
+      "type": "phone",
+      "clipsDir": "videos/video-01",
+      "cutFrames": 6,
+      "statusBarTime": "9:41",
+      "clips": [
+        {
+          "name": "00-gps",
+          "segments": [
+            {
+              "from": 500,
+              "to": 2700,
+              "rate": 1.3
+            },
+            {
+              "from": 3000,
+              "to": 3450,
+              "rate": 1.2
+            },
+            {
+              "from": 4150,
+              "to": 6300,
+              "rate": 1.1
+            }
+          ],
+          "camera": [
+            {
+              "atMs": 500,
+              "scale": 1.45,
+              "focus": "card",
+              "moveMs": 0
+            },
+            {
+              "event": "clock-in",
+              "offsetMs": -150,
+              "scale": 1.7,
+              "focus": "clock-in",
+              "moveMs": 400
+            },
+            {
+              "event": "ask",
+              "offsetMs": 150,
+              "scale": 1.35,
+              "focus": {
+                "event": "ask",
+                "fy": 0.32
+              },
+              "moveMs": 450
+            },
+            {
+              "event": "continue",
+              "offsetMs": -100,
+              "scale": 1.5,
+              "focus": "continue",
+              "moveMs": 300
+            },
+            {
+              "event": "card-on-shift",
+              "scale": 1.6,
+              "focus": "card-on-shift",
+              "moveMs": 450
+            }
+          ],
+          "badges": [
+            {
+              "event": "card-on-shift",
+              "text": "GPS check ✓ · On site",
+              "icon": "map-pin"
+            }
+          ]
+        },
+        {
+          "name": "02-upload",
+          "from": 700,
+          "to": "loaded+250",
+          "rate": 2.3,
+          "camera": [
+            {
+              "event": "client",
+              "offsetMs": -150,
+              "scale": 1.45,
+              "focus": "client",
+              "moveMs": 300
+            },
+            {
+              "event": "file-chip",
+              "scale": 1.45,
+              "focus": "file-chip",
+              "moveMs": 300
+            },
+            {
+              "event": "next",
+              "offsetMs": -100,
+              "scale": 1.4,
+              "focus": "next",
+              "moveMs": 250
+            },
+            {
+              "event": "loaded",
+              "scale": 1.05,
+              "focus": "center",
+              "moveMs": 250
+            }
+          ]
+        },
+        {
+          "name": "03-covers",
+          "from": 700,
+          "to": "loaded+250",
+          "rate": 2.7,
+          "camera": [
+            {
+              "event": "second-order",
+              "offsetMs": -150,
+              "scale": 1.4,
+              "focus": "second-order",
+              "moveMs": 250
+            },
+            {
+              "event": "week",
+              "offsetMs": -100,
+              "scale": 1.45,
+              "focus": "week",
+              "moveMs": 250
+            },
+            {
+              "event": "summary",
+              "scale": 1.35,
+              "focus": "summary",
+              "moveMs": 250
+            },
+            {
+              "event": "compare",
+              "offsetMs": -100,
+              "scale": 1.35,
+              "focus": "compare",
+              "moveMs": 220
+            },
+            {
+              "event": "loaded",
+              "scale": 1.05,
+              "focus": "center",
+              "moveMs": 250
+            }
+          ]
+        },
+        {
+          "name": "04-sheet",
+          "segments": [
+            {
+              "from": 700,
+              "to": 2550,
+              "rate": 1.9
+            },
+            {
+              "from": 2750,
+              "to": 4100,
+              "rate": 1.15
+            }
+          ],
+          "camera": [
+            {
+              "event": "sheet-tab",
+              "offsetMs": -150,
+              "scale": 1.25,
+              "focus": "sheet-tab",
+              "moveMs": 250
+            },
+            {
+              "event": "zoom-in",
+              "offsetMs": -100,
+              "scale": 1.3,
+              "focus": "zoom-in",
+              "moveMs": 250
+            },
+            {
+              "event": "zoom-in-2",
+              "offsetMs": 300,
+              "scale": 2.1,
+              "focus": {
+                "event": "sheet-image",
+                "fx": 0.42,
+                "fy": 0.47
+              },
+              "moveMs": 550
+            }
+          ]
+        },
+        {
+          "name": "05-compare",
+          "segments": [
+            {
+              "from": 700,
+              "to": 1350,
+              "rate": 1.4
+            },
+            {
+              "from": 2400,
+              "to": 4350,
+              "rate": 1.25
+            },
+            {
+              "from": 4950,
+              "to": 5950,
+              "rate": 1.2
+            },
+            {
+              "from": 6300,
+              "to": 7400,
+              "rate": 1.0
+            }
+          ],
+          "camera": [
+            {
+              "atMs": 700,
+              "scale": 1.2,
+              "focus": "center",
+              "moveMs": 0
+            },
+            {
+              "event": "client-hours",
+              "offsetMs": -250,
+              "scale": 1.75,
+              "focus": "client-hours",
+              "moveMs": 400
+            },
+            {
+              "event": "diff-row",
+              "offsetMs": 50,
+              "scale": 1.55,
+              "focus": "diff-row",
+              "moveMs": 400
+            },
+            {
+              "event": "decision",
+              "offsetMs": -150,
+              "scale": 1.6,
+              "focus": "decision",
+              "moveMs": 300
+            },
+            {
+              "event": "effect",
+              "offsetMs": 100,
+              "scale": 1.5,
+              "focus": "diff-row",
+              "moveMs": 350
+            }
+          ],
+          "glow": [
+            {
+              "event": "diff-row",
+              "color": "accent",
+              "pad": 4
+            }
+          ]
+        },
+        {
+          "name": "06-validate",
+          "segments": [
+            {
+              "from": 450,
+              "to": 2150,
+              "rate": 1.35
+            },
+            {
+              "from": 2750,
+              "to": 3500,
+              "rate": 1.0
+            }
+          ],
+          "camera": [
+            {
+              "atMs": 450,
+              "scale": 1.5,
+              "focus": "validate",
+              "moveMs": 0
+            },
+            {
+              "event": "validated-chip",
+              "offsetMs": -200,
+              "scale": 1.75,
+              "focus": "validated-chip",
+              "moveMs": 350
+            }
+          ],
+          "glow": [
+            {
+              "event": "validated-chip",
+              "untilEvent": "to-done",
+              "color": "highlight",
+              "pad": 6
+            }
+          ]
+        },
+        {
+          "name": "07-invoice",
+          "segments": [
+            {
+              "from": 600,
+              "to": 2450,
+              "rate": 1.35
+            },
+            {
+              "from": 2700,
+              "to": 5700,
+              "rate": 1.2
+            }
+          ],
+          "camera": [
+            {
+              "atMs": 600,
+              "scale": 1.5,
+              "focus": "create-invoice",
+              "moveMs": 0
+            },
+            {
+              "event": "loaded",
+              "scale": 1.35,
+              "focus": "filled-note",
+              "moveMs": 400
+            },
+            {
+              "event": "sheet-week",
+              "offsetMs": -150,
+              "scale": 1.6,
+              "focus": "sheet-week",
+              "moveMs": 450
+            }
+          ],
+          "glow": [
+            {
+              "event": "sheet-week",
+              "color": "highlight",
+              "pad": 6
+            }
+          ]
+        }
+      ],
+      "lines": [
+        {
+          "id": "gps",
+          "clip": "00-gps",
+          "offsetMs": 420
+        },
+        {
+          "id": "drop",
+          "clip": "02-upload",
+          "offsetMs": 1350
+        },
+        {
+          "id": "diff",
+          "clip": "05-compare",
+          "offsetMs": 50
+        },
+        {
+          "id": "validate",
+          "clip": "06-validate",
+          "event": "validate",
+          "offsetMs": -120
+        },
+        {
+          "id": "invoice",
+          "clip": "07-invoice",
+          "event": "create-invoice",
+          "offsetMs": -200
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "leadMs": 400
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "{{NAME}}",
+  "colors": {
+    "ink": "#15171C",
+    "paper": "#F3F1EC",
+    "accent": "#FF6A3D",
+    "highlight": "#2F7CF6"
+  },
+  "font": "Inter",
+  "logo": null,
+  "photo": null,
+  "look": { "cards": "solid" },
+  "features": [
+    { "label": "First feature", "icon": "zap" },
+    { "label": "Second feature", "icon": "list-checks" },
+    { "label": "Third feature", "icon": "sparkles" }
+  ],
+  "outro": {
+    "title": "Everything in {{NAME}}",
+    "tagline": ["One line about what it does.", "Done."],
+    "cta": "Try it · {{SLUG}}.com",
+    "lines": [
+      { "id": "outro-close", "say": "{{NAME}}. | Say what it does in five words.", "speed": 0.97 }
+    ],
+    "gapMs": 800,
+    "tailMs": 1000
+  }
+}

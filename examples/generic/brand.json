@@ -1,0 +1,64 @@
+{
+  "name": "Todo demo",
+  "colors": {
+    "ink": "#17181D",
+    "paper": "#F5F2EA",
+    "accent": "#E0464B",
+    "highlight": "#2F7CF6"
+  },
+  "font": "DM Sans",
+  "logo": "brand/logo.svg",
+  "look": {
+    "cards": "solid"
+  },
+  "features": [
+    {
+      "label": "Add a task",
+      "icon": "type"
+    },
+    {
+      "label": "Tick it off",
+      "icon": "check-square"
+    },
+    {
+      "label": "Items-left count",
+      "icon": "list-checks"
+    },
+    {
+      "label": "Active filter",
+      "icon": "filter"
+    },
+    {
+      "label": "Completed filter",
+      "icon": "check"
+    },
+    {
+      "label": "Clear completed",
+      "icon": "trash"
+    }
+  ],
+  "outro": {
+    "title": "The Todo demo",
+    "tagline": [
+      "One list, nothing extra.",
+      "Done."
+    ],
+    "cta": "demo.playwright.dev/todomvc",
+    "lines": [
+      {
+        "id": "outro-close",
+        "say": "The Todo demo. | One list, nothing extra.",
+        "speed": 0.97,
+        "pauseMs": 320
+      },
+      {
+        "id": "outro-recap",
+        "say": "Add it, tick it, filter it, clear it. | That's the whole app.",
+        "speed": 1.0,
+        "pauseMs": 300
+      }
+    ],
+    "gapMs": 800,
+    "tailMs": 1200
+  }
+}

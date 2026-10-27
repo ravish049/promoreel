@@ -1,0 +1,18 @@
+{
+  "project": "crewdash",
+  "updated": "2026-10-27T00:00:00.000Z",
+  "videos": [
+    {
+      "id": "video-01",
+      "title": "Losing hours? Validate the client's sheet, then invoice",
+      "path": "out/video-01.mp4",
+      "durationSec": 41.77,
+      "width": 1080,
+      "height": 1920,
+      "sizeBytes": 5750999,
+      "voice": "chatterbox",
+      "created": "2026-10-26T21:36:00.000Z",
+      "spec": "reels/video-01.json"
+    }
+  ]
+}

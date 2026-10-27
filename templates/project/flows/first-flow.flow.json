@@ -1,0 +1,15 @@
+{
+  "name": "first-flow",
+  "url": "{{URL}}",
+  "clips": [
+    {
+      "name": "01-open",
+      "steps": [
+        { "goto": "/" },
+        { "mark": "loaded" },
+        { "focus": "h1", "label": "title" },
+        { "wait": 1500 }
+      ]
+    }
+  ]
+}

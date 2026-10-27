@@ -1,0 +1,88 @@
+{
+  "name": "promoreel",
+  "colors": {
+    "ink": "#0E1116",
+    "paper": "#F2F0EA",
+    "accent": "#3DDC97",
+    "highlight": "#4F8CFF",
+    "success": "#3DDC97"
+  },
+  "font": "Space Grotesk",
+  "logo": "brand/logo.svg",
+  "look": {
+    "cards": "solid"
+  },
+  "features": [
+    {
+      "label": "Records any URL",
+      "icon": "mouse-pointer-click"
+    },
+    {
+      "label": "Phone size, 3× crisp",
+      "icon": "smartphone"
+    },
+    {
+      "label": "Tap zooms & ripples",
+      "icon": "zoom-in"
+    },
+    {
+      "label": "Free local voice",
+      "icon": "mic"
+    },
+    {
+      "label": "Whisper captions",
+      "icon": "captions"
+    },
+    {
+      "label": "Remotion render",
+      "icon": "film"
+    },
+    {
+      "label": "Claude Code skill",
+      "icon": "bot"
+    },
+    {
+      "label": "Codex AGENTS.md",
+      "icon": "code"
+    },
+    {
+      "label": "JSON progress",
+      "icon": "terminal"
+    },
+    {
+      "label": "GitHub repo in",
+      "icon": "git-branch"
+    },
+    {
+      "label": "No API keys",
+      "icon": "zap"
+    },
+    {
+      "label": "MIT licensed",
+      "icon": "check"
+    }
+  ],
+  "outro": {
+    "title": "Everything in promoreel",
+    "tagline": [
+      "Your app, your agent, your reel.",
+      "Free."
+    ],
+    "cta": "github.com/ravish049/promoreel",
+    "lines": [
+      {
+        "id": "outro-close",
+        "say": "Promo reel. | Your app, your agent, your reel.",
+        "text": "promoreel. Your app, your agent, your reel.",
+        "speed": 0.97
+      },
+      {
+        "id": "outro-free",
+        "say": "It's open source, | and free for solo devs and small teams.",
+        "speed": 1.0
+      }
+    ],
+    "gapMs": 700,
+    "tailMs": 1200
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "id": "todo-promo",
+  "title": "Todo demo: one list, nothing extra",
+  "voice": {
+    "use": "af_heart",
+    "speed": 1.0,
+    "dtype": "fp32"
+  },
+  "captions": {
+    "model": "base.en"
+  },
+  "crf": 24,
+  "lines": [
+    {
+      "id": "hook",
+      "say": "Got too much in your head right now?",
+      "speed": 1.0
+    },
+    {
+      "id": "quiz",
+      "say": "So where do your to-dos actually live?",
+      "text": "So where do your to-dos actually live?",
+      "speed": 1.02
+    },
+    {
+      "id": "reveal",
+      "say": "Honestly? | Sticky notes get lost. | A list doesn't.",
+      "speed": 1.02,
+      "pauseMs": 280
+    },
+    {
+      "id": "add",
+      "say": "Type a task, | hit enter, | and it's on the list.",
+      "speed": 1.03,
+      "pauseMs": 240
+    },
+    {
+      "id": "done",
+      "say": "Done with one? | Tick it off, | and the counter drops.",
+      "speed": 1.03,
+      "pauseMs": 240
+    },
+    {
+      "id": "filter",
+      "say": "Filter what's left, | then clear the finished ones in a tap.",
+      "speed": 1.02,
+      "pauseMs": 260
+    }
+  ],
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "hook",
+      "headline": "Too much in your head?",
+      "lines": [
+        {
+          "id": "hook"
+        }
+      ],
+      "leadMs": 300,
+      "tailMs": 350
+    },
+    {
+      "id": "quiz",
+      "type": "quiz",
+      "question": "Where do your to-dos live?",
+      "highlight": [
+        "to-dos"
+      ],
+      "options": [
+        "Sticky notes",
+        "Your head",
+        "One clean list"
+      ],
+      "answer": 2,
+      "revealLine": "reveal",
+      "lines": [
+        {
+          "id": "quiz"
+        },
+        {
+          "id": "reveal",
+          "gapBeforeMs": 450
+        }
+      ],
+      "leadMs": 300,
+      "tailMs": 300
+    },
+    {
+      "id": "phone",
+      "type": "phone",
+      "clipsDir": "videos/todos",
+      "statusBarColor": "#FFEE5B",
+      "clips": [
+        {
+          "name": "01-add",
+          "segments": [
+            {
+              "from": 300,
+              "to": "first-enter+350",
+              "rate": 1.2
+            },
+            {
+              "from": "second-200",
+              "to": "second-enter+300",
+              "rate": 1.5
+            },
+            {
+              "from": "third-200",
+              "to": "list+500",
+              "rate": 1.6
+            }
+          ],
+          "camera": [
+            {
+              "atMs": 300,
+              "scale": 1.15,
+              "focus": "center",
+              "moveMs": 0
+            },
+            {
+              "event": "first",
+              "offsetMs": -150,
+              "scale": 1.55,
+              "focus": "first",
+              "moveMs": 450
+            },
+            {
+              "event": "third-enter",
+              "scale": 1.3,
+              "focus": "list",
+              "moveMs": 450
+            }
+          ]
+        },
+        {
+          "name": "02-done",
+          "from": 500,
+          "to": "count+900",
+          "rate": 1.25,
+          "camera": [
+            {
+              "atMs": 500,
+              "scale": 1.45,
+              "focus": "tick-1",
+              "moveMs": 0
+            },
+            {
+              "event": "count",
+              "offsetMs": -100,
+              "scale": 1.6,
+              "focus": "count",
+              "moveMs": 400
+            }
+          ],
+          "glow": [
+            {
+              "event": "count",
+              "color": "accent",
+              "pad": 6
+            }
+          ]
+        },
+        {
+          "name": "03-filter",
+          "segments": [
+            {
+              "from": 500,
+              "to": "active-list+600",
+              "rate": 1.15
+            },
+            {
+              "from": "completed-250",
+              "to": "done-list+500",
+              "rate": 1.15
+            },
+            {
+              "from": "clear-250",
+              "to": "final-list+700",
+              "rate": 1.1
+            }
+          ],
+          "camera": [
+            {
+              "atMs": 500,
+              "scale": 1.35,
+              "focus": "active",
+              "moveMs": 0
+            },
+            {
+              "event": "completed",
+              "offsetMs": -100,
+              "scale": 1.35,
+              "focus": "completed",
+              "moveMs": 300
+            },
+            {
+              "event": "clear",
+              "offsetMs": -150,
+              "scale": 1.5,
+              "focus": "clear",
+              "moveMs": 300
+            },
+            {
+              "event": "final-list",
+              "scale": 1.3,
+              "focus": "final-list",
+              "moveMs": 400
+            }
+          ],
+          "glow": [
+            {
+              "event": "final-list",
+              "color": "highlight",
+              "pad": 4
+            }
+          ]
+        }
+      ],
+      "lines": [
+        {
+          "id": "add",
+          "clip": "01-add",
+          "offsetMs": 450
+        },
+        {
+          "id": "done",
+          "clip": "02-done",
+          "offsetMs": 150
+        },
+        {
+          "id": "filter",
+          "clip": "03-filter",
+          "offsetMs": 200
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "leadMs": 400
+    }
+  ]
+}

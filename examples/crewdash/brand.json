@@ -1,0 +1,102 @@
+{
+  "name": "CrewDash",
+  "colors": {
+    "ink": "#181410",
+    "paper": "#EFEBE2",
+    "accent": "#FF5A00",
+    "highlight": "#0071E3",
+    "success": "#228336"
+  },
+  "font": "Inter",
+  "logo": "brand/logo.svg",
+  "photo": "brand/bg-loading-dock.jpg",
+  "look": {
+    "cards": "solid"
+  },
+  "features": [
+    {
+      "label": "Job orders",
+      "icon": "list"
+    },
+    {
+      "label": "Dispatch",
+      "icon": "send"
+    },
+    {
+      "label": "Worker app",
+      "icon": "smartphone"
+    },
+    {
+      "label": "GPS clock-in",
+      "icon": "map-pin"
+    },
+    {
+      "label": "Timesheets",
+      "icon": "clock"
+    },
+    {
+      "label": "Weekly & bi-weekly pay",
+      "icon": "banknote"
+    },
+    {
+      "label": "Client sheet check",
+      "icon": "check-square"
+    },
+    {
+      "label": "Invoices",
+      "icon": "file-text"
+    },
+    {
+      "label": "Margins",
+      "icon": "line-chart"
+    },
+    {
+      "label": "Worker chat",
+      "icon": "message-square"
+    },
+    {
+      "label": "Job ads",
+      "icon": "megaphone"
+    },
+    {
+      "label": "Sales CRM",
+      "icon": "users"
+    },
+    {
+      "label": "QuickBooks sync",
+      "icon": "refresh"
+    },
+    {
+      "label": "AI sheet reading",
+      "icon": "sparkles"
+    },
+    {
+      "label": "Worker self-signup",
+      "icon": "user-plus"
+    }
+  ],
+  "outro": {
+    "title": "Everything in CrewDash",
+    "tagline": [
+      "Everything a small agency needs.",
+      "Covered."
+    ],
+    "cta": "Book a demo · crewdash.ca",
+    "lines": [
+      {
+        "id": "outro-close",
+        "say": "Crew Dash. | Every hour, matched.",
+        "text": "CrewDash. Every hour, matched.",
+        "speed": 0.95
+      },
+      {
+        "id": "outro-covered",
+        "say": "Dispatch, timesheets, payroll, invoicing… | everything a small agency needs, | covered.",
+        "text": "Dispatch, timesheets, payroll, invoicing… everything a small agency needs, covered.",
+        "speed": 1.0
+      }
+    ],
+    "gapMs": 900,
+    "tailMs": 1000
+  }
+}

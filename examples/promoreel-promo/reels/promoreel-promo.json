@@ -1,0 +1,213 @@
+{
+  "id": "promoreel-promo",
+  "title": "Make a promo reel of your app with Claude Code, free",
+  "voice": {
+    "use": "chatterbox",
+    "render": [
+      "chatterbox"
+    ],
+    "chatterbox": {
+      "exaggeration": 0.55,
+      "cfgWeight": 0.45,
+      "seed": 7
+    }
+  },
+  "captions": {
+    "model": "small.en"
+  },
+  "crf": 24,
+  "lines": [
+    {
+      "id": "hook",
+      "say": "Want a promo reel of your app?"
+    },
+    {
+      "id": "cards",
+      "say": "You need zero A P I keys, | and zero paid voices.",
+      "text": "You need 0 API keys, and 0 paid voices."
+    },
+    {
+      "id": "step-1",
+      "say": "Step one: | Claude Code reads your app, | and records a real flow at phone size."
+    },
+    {
+      "id": "step-2",
+      "say": "Step two: | it writes the script, | and a free local voice reads it."
+    },
+    {
+      "id": "step-3",
+      "say": "Step three: | Whisper adds the captions,",
+      "text": "Step three: Whisper adds the captions,"
+    },
+    {
+      "id": "step-3b",
+      "say": "and Remotion renders the reel.",
+      "seed": 42
+    },
+    {
+      "id": "result",
+      "say": "Out comes a vertical reel, | with tap zooms, captions, and a clean outro."
+    }
+  ],
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "hook",
+      "headline": "A promo reel of your app?",
+      "cardsLine": "cards",
+      "cards": [
+        {
+          "label": "API keys you need",
+          "from": 3,
+          "value": 0,
+          "icon": "zap"
+        },
+        {
+          "label": "Paid voices",
+          "value": 0,
+          "atWord": "paid",
+          "icon": "mic"
+        }
+      ],
+      "badge": {
+        "text": "Free",
+        "atWord": "voices."
+      },
+      "lines": [
+        {
+          "id": "hook"
+        },
+        {
+          "id": "cards",
+          "gapBeforeMs": 350
+        }
+      ],
+      "leadMs": 300,
+      "tailMs": 500
+    },
+    {
+      "id": "steps",
+      "type": "terminal",
+      "title": "~/promoreel",
+      "lines": [
+        {
+          "id": "step-1"
+        },
+        {
+          "id": "step-2",
+          "gapBeforeMs": 450
+        },
+        {
+          "id": "step-3",
+          "gapBeforeMs": 450
+        },
+        {
+          "id": "step-3b",
+          "gapBeforeMs": 120
+        }
+      ],
+      "leadMs": 500,
+      "tailMs": 500,
+      "commands": [
+        {
+          "atLine": "step-1",
+          "offsetMs": 200,
+          "step": "Record",
+          "cmd": "npx promoreel record examples/generic",
+          "output": [
+            "▸ record   1 flow(s): todos.flow.json",
+            {
+              "text": "  clip 01-add: 12.7 s · 382 frames · 1170×2532",
+              "tone": "plain"
+            },
+            {
+              "text": "  clip 02-done: 4.6 s · 140 frames · 1170×2532",
+              "tone": "plain"
+            },
+            {
+              "text": "  clip 03-filter: 8.5 s · 257 frames · 1170×2532",
+              "tone": "plain"
+            },
+            {
+              "text": "✓ record   recorded 1 flow(s)",
+              "tone": "ok"
+            }
+          ],
+          "progress": true
+        },
+        {
+          "atLine": "step-2",
+          "offsetMs": 200,
+          "step": "Voice",
+          "cmd": "npx promoreel voice examples/generic",
+          "output": [
+            "▸ voice    8 lines × 1 voice(s): af_heart",
+            {
+              "text": "· kokoro:af_heart hook 1.69 s",
+              "tone": "plain"
+            },
+            {
+              "text": "· kokoro:af_heart add 3.27 s",
+              "tone": "plain"
+            },
+            "  clip \"02-done\" slowed to 70 % so its line fits",
+            {
+              "text": "✓ voice    voice-over ready (af_heart)",
+              "tone": "ok"
+            }
+          ],
+          "progress": true
+        },
+        {
+          "atLine": "step-3",
+          "offsetMs": 150,
+          "step": "Render",
+          "cmd": "npx promoreel captions examples/generic",
+          "output": [
+            {
+              "text": "· captions hook: heard \"Got too much in your head right now.\"",
+              "tone": "plain"
+            },
+            {
+              "text": "✓ captions captions for 8 lines",
+              "tone": "ok"
+            }
+          ]
+        },
+        {
+          "atLine": "step-3b",
+          "offsetMs": 0,
+          "step": "Render",
+          "cmd": "npx promoreel render examples/generic",
+          "output": [
+            "· render   frames 980/980, encoded 980",
+            {
+              "text": "✓ render   out/todo-promo.mp4 · 32.68 s",
+              "tone": "ok"
+            }
+          ],
+          "progress": true
+        }
+      ]
+    },
+    {
+      "id": "result",
+      "type": "showcase",
+      "src": "../generic/out/todo-promo.mp4",
+      "fromMs": 8600,
+      "label": "The result",
+      "lines": [
+        {
+          "id": "result"
+        }
+      ],
+      "leadMs": 400,
+      "tailMs": 900
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "leadMs": 400
+    }
+  ]
+}

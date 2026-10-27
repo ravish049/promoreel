@@ -1,0 +1,43 @@
+{
+  "name": "todos",
+  "url": "https://demo.playwright.dev/todomvc",
+  "setup": [{ "goto": "/#/" }],
+  "clips": [
+    {
+      "name": "01-add",
+      "steps": [
+        { "mark": "loaded" },
+        { "focus": "h1", "label": "title" },
+        { "type": "Buy oat milk", "into": { "placeholder": "What needs to be done?" }, "label": "first", "enter": true },
+        { "type": "Book the dentist", "into": { "placeholder": "What needs to be done?" }, "label": "second", "enter": true, "perKey": 110 },
+        { "type": "Ship the release notes", "into": { "placeholder": "What needs to be done?" }, "label": "third", "enter": true, "perKey": 100 },
+        { "focus": "ul.todo-list", "label": "list" },
+        { "wait": 600 }
+      ]
+    },
+    {
+      "name": "02-done",
+      "steps": [
+        { "tap": { "css": "ul.todo-list li .toggle", "nth": 0 }, "label": "tick-1" },
+        { "tap": { "css": "ul.todo-list li .toggle", "nth": 1 }, "label": "tick-2" },
+        { "focus": ".todo-count", "label": "count" },
+        { "wait": 900 }
+      ]
+    },
+    {
+      "name": "03-filter",
+      "steps": [
+        { "tap": { "role": "link", "name": "Active" }, "label": "active" },
+        { "focus": "ul.todo-list", "label": "active-list" },
+        { "wait": 700 },
+        { "tap": { "role": "link", "name": "Completed" }, "label": "completed" },
+        { "focus": "ul.todo-list", "label": "done-list" },
+        { "wait": 600 },
+        { "tap": { "role": "button", "name": "Clear completed" }, "label": "clear" },
+        { "tap": { "role": "link", "name": "All" }, "label": "all" },
+        { "focus": "ul.todo-list", "label": "final-list" },
+        { "wait": 900 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# Display metadata for agents that read it (Codex). The instructions themselves are SKILL.md; Codex also reads AGENTS.md.
+interface:
+  display_name: promoreel
+  short_description: Vertical promo reels of your own web app, free and local
+  brand_color: "#3DDC97"
+  default_prompt: Make a 35-second promo reel of this app with promoreel

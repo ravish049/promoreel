@@ -1,0 +1,19 @@
+{
+  "project": "promoreel-promo",
+  "updated": "2026-10-27T15:37:12.503Z",
+  "videos": [
+    {
+      "id": "promoreel-promo",
+      "title": "Make a promo reel of your app with Claude Code, free",
+      "path": "out/promoreel-promo.mp4",
+      "sheet": "out/promoreel-promo-sheet.png",
+      "durationSec": 32.15,
+      "width": 1080,
+      "height": 1920,
+      "sizeBytes": 3704171,
+      "voice": "chatterbox",
+      "created": "2026-10-27T15:37:12.502Z",
+      "spec": "reels/promoreel-promo.json"
+    }
+  ]
+}

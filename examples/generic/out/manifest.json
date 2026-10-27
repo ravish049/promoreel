@@ -1,0 +1,19 @@
+{
+  "project": "generic",
+  "updated": "2026-10-27T15:36:14.338Z",
+  "videos": [
+    {
+      "id": "todo-promo",
+      "title": "Todo demo: one list, nothing extra",
+      "path": "out/todo-promo.mp4",
+      "sheet": "out/todo-promo-sheet.png",
+      "durationSec": 32.68,
+      "width": 1080,
+      "height": 1920,
+      "sizeBytes": 3638105,
+      "voice": "af_heart",
+      "created": "2026-10-27T15:36:14.338Z",
+      "spec": "reels/todo-promo.json"
+    }
+  ]
+}
