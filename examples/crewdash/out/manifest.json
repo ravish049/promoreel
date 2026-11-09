@@ -1,7 +1,46 @@
 {
   "project": "crewdash",
-  "updated": "2026-11-09T18:37:40.486Z",
+  "updated": "2026-11-09T18:44:29.907Z",
   "videos": [
+    {
+      "id": "launch-1x1",
+      "title": "Every hour, matched: the CrewDash launch film",
+      "path": "out/launch-1x1.mp4",
+      "sheet": "out/launch-1x1-sheet.png",
+      "durationSec": 30.02,
+      "width": 1080,
+      "height": 1080,
+      "sizeBytes": 6864477,
+      "created": "2026-11-09T18:44:29.906Z",
+      "spec": "reels/launch.json",
+      "format": "1x1"
+    },
+    {
+      "id": "launch",
+      "title": "Every hour, matched: the CrewDash launch film",
+      "path": "out/launch.mp4",
+      "sheet": "out/launch-sheet.png",
+      "durationSec": 30.02,
+      "width": 1080,
+      "height": 1920,
+      "sizeBytes": 8484028,
+      "created": "2026-11-09T18:44:02.713Z",
+      "spec": "reels/launch.json",
+      "format": "9x16"
+    },
+    {
+      "id": "launch-16x9",
+      "title": "Every hour, matched: the CrewDash launch film",
+      "path": "out/launch-16x9.mp4",
+      "sheet": "out/launch-16x9-sheet.png",
+      "durationSec": 30.02,
+      "width": 1920,
+      "height": 1080,
+      "sizeBytes": 9901367,
+      "created": "2026-11-09T18:43:29.363Z",
+      "spec": "reels/launch.json",
+      "format": "16x9"
+    },
     {
       "id": "walk-short",
       "title": "Dispatch to invoice: a CrewDash feature walk",

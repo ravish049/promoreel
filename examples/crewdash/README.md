@@ -22,6 +22,8 @@ What's in it, and which part of the kit made each piece:
 - `out/video-01.mp4`: the finished reel.
 - `reels/walk.json`: the feature walk's spec (long and short cuts); `out/walk-long.mp4`, `out/walk-short.mp4` and their
   contact sheets.
+- `reels/launch.json`: the launch film's spec; `out/launch-16x9.mp4`, `out/launch.mp4` (9:16), `out/launch-1x1.mp4`
+  and their contact sheets.
 - `reels/video-01.json`: its spec, in promoreel's format (the hook's cards were a fixed layout in the original template).
 - `brand.json`: CrewDash's colours (ink `#181410`, paper `#EFEBE2`, orange `#FF5A00`, the app's blue `#0071E3`), Inter,
   the 15 features and the outro's two lines.
@@ -41,6 +43,22 @@ npx promoreel all examples/crewdash --reel walk     # needs Chatterbox: bash scr
 ```
 
 The people, clients and amounts on the screens are made up.
+
+## The launch film: "Every hour, matched"
+
+**▶ [`out/launch-16x9.mp4`](out/launch-16x9.mp4)** · [`out/launch.mp4`](out/launch.mp4) (9:16) ·
+[`out/launch-1x1.mp4`](out/launch-1x1.mp4), 30 s each, from `reels/launch.json` in the `launch` style: music and clicks,
+no voice. "140 timesheets. Payroll's at 5." while the counter rolls up → the payroll sheet checked against the client
+sheets ("Check. Retype. Repeat.") → the week's client sheets and a click on **Match the week** → GPS hours, client
+sheets, payroll and invoices tick off as the counter drops to 0 ("Matched. Paid. Invoiced.") → the logo, "Every hour,
+matched." and "Book a demo". It re-expresses CrewDash's own launch film with the screen kit and, needing no voice, renders
+again from this repo:
+
+```bash
+npx promoreel all examples/crewdash --reel launch
+```
+
+The workers, clients, files and numbers on the screens are made up.
 
 ## Why `video-01` can't be rendered again
 

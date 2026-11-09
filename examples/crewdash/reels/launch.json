@@ -1,0 +1,76 @@
+{
+  "id": "launch",
+  "style": "launch",
+  "title": "Every hour, matched: the CrewDash launch film",
+  "formats": ["16x9", "9x16", "1x1"],
+  "music": { "bpm": 120 },
+  "counter": { "label": "Timesheets to match", "value": 140 },
+  "scenes": [
+    {
+      "id": "hook",
+      "kind": "hook",
+      "seconds": 4,
+      "headline": [{ "text": "140 timesheets." }, { "text": "Payroll's at 5.", "accent": true }]
+    },
+    {
+      "id": "grind",
+      "kind": "screen",
+      "seconds": 6.5,
+      "words": ["Check.", "Retype.", "Repeat."],
+      "screen": {
+        "kind": "table",
+        "title": "Payroll · week 42",
+        "subtitle": "Typed in from the client sheets",
+        "icon": "clock",
+        "columns": ["Worker", "Sheet", "Payroll"],
+        "rows": [
+          ["Daniel Okoye", "38.0", "40.0"],
+          ["Lena Fischer", "32.5", "32.5"],
+          ["Priya Nair", "44.0", "44.0"],
+          ["Marco Silva", "36.0", "38.0"]
+        ],
+        "compare": { "columns": [1, 2] },
+        "summary": "4 of 140 checked · 2 to retype"
+      }
+    },
+    {
+      "id": "match",
+      "kind": "screen",
+      "seconds": 7.5,
+      "screen": {
+        "kind": "list",
+        "title": "Week 42",
+        "subtitle": "Oct 12 – 18 · 140 shifts · 4 clients",
+        "icon": "check-square",
+        "badge": "12 client sheets",
+        "rows": [
+          { "title": "Bayview Cold Chain", "subtitle": "Bayview-week-42.pdf", "icon": "file-text", "value": "38 shifts" },
+          { "title": "Mississauga DC", "subtitle": "MDC-oct-12.xlsx", "icon": "file-text", "value": "41 shifts" },
+          { "title": "Northline Foods", "subtitle": "Northline-wk42.pdf", "icon": "file-text", "value": "33 shifts" },
+          { "title": "Harbour Freight", "subtitle": "Harbour-1012.pdf", "icon": "file-text", "value": "28 shifts" }
+        ],
+        "button": { "label": "Match the week", "busy": "Matching…", "done": "Week matched" }
+      }
+    },
+    {
+      "id": "payoff",
+      "kind": "payoff",
+      "seconds": 6.5,
+      "words": ["Matched.", "Paid.", "Invoiced."],
+      "cards": [
+        { "title": "GPS hours", "icon": "map-pin", "done": "140 shifts on site", "lines": ["Bayview · 38 shifts", "Mississauga DC · 41", "Northline · 33", "Harbour · 28"] },
+        { "title": "Client sheets", "icon": "sparkles", "done": "12 sheets checked", "lines": ["Bayview-week-42.pdf", "MDC-oct-12.xlsx", "Northline-wk42.pdf", "Harbour-1012.pdf"] },
+        { "title": "Payroll", "icon": "banknote", "done": "Weekly pay ready", "lines": ["96 workers · weekly", "44 workers · bi-weekly", "Overtime checked", "Stubs ready to send"] },
+        { "title": "Invoices", "icon": "file-text", "done": "4 invoices drafted", "lines": ["Bayview Cold Chain", "Mississauga DC", "Northline Foods", "Harbour Freight"] }
+      ]
+    },
+    {
+      "id": "logo",
+      "kind": "logo",
+      "seconds": 5.5,
+      "tagline": ["Every hour,", "matched."],
+      "line": "Dispatch, timesheets, payroll and invoicing for small staffing agencies.",
+      "cta": "Book a demo · crewdash.ca"
+    }
+  ]
+}
