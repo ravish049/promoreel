@@ -1,7 +1,7 @@
 <h1 align="center">promoreel</h1>
 
 <p align="center">
-  <strong>Turn your web app into scroll-stopping 1080×1920 promo reels — with your own Claude Code or Codex. Free, local, no API keys.</strong>
+  <strong>Turn your web app into promo videos (recorded reels, feature walks, launch films) with your own Claude Code or Codex. Free, local, no API keys.</strong>
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@
 
 ## Why
 
-A short vertical video is the best way to show what a web app does. Making one by hand means:
+A short video shows what a web app does faster than a page of text. Making one by hand means:
 - screen-recording on a phone;
 - cutting out the waiting;
 - recording a voice-over;
@@ -55,23 +55,23 @@ promoreel does that work with tools you already have:
 1. **Understand.** `promoreel repo` clones your GitHub repo with your own `gh` login, or uses a local folder. Your
    agent reads the README and routes, runs the app locally, and proposes 3–5 reel ideas from real flows.
 2. **Record.** The agent writes flow files (go to, tap, type, scroll, mark), and `promoreel record` films each step as
-   a clip. Each clip gets a JSON file listing every tap and focus, with its time and position.
+   a clip. Each clip gets a JSON file listing every tap and focus, with its time and position. (Walks and launch films
+   skip this: the agent describes the screens in JSON instead.)
 3. **Narrate.** The script lives in the reel's spec. `promoreel voice` speaks each line locally, and `promoreel
    captions` times every word with Whisper. Lines are timed into the video automatically. If a line is longer than the
    footage under it, that clip slows down until it fits, and the CLI tells you.
 4. **Render.** `promoreel render` produces `out/<id>.mp4`, an 8-frame contact sheet the agent reads to check its work,
    and an entry in `out/manifest.json`.
 
-The template has six scene types:
+## Pick a style
 
-| Scene | What it shows |
-|---|---|
-| `hook` | A big question, with optional odometer number cards |
-| `quiz` | Options; the right one lights up |
-| `phone` | Your recordings, with zooms, tap ripples, glows, badges and jump cuts |
-| `terminal` | For developer tools |
-| `showcase` | A finished video in a frame |
-| `end` | Your feature grid and call to action |
+| Style | Made from | Formats | Sound | Example |
+|---|---|---|---|---|
+| [`recorded`](docs/styles/recorded.md) (default) | Recordings of your running app, with zooms, tap ripples and jump cuts; scenes for a hook, a quiz, a terminal and a closing grid | 9:16 | Voice, captions | [TodoMVC](examples/generic/out/todo-promo.mp4) |
+| [`walk`](docs/styles/walk.md) | Screens described in JSON, shown one step at a time with a step tracker; a long and a short cut from one spec | 9:16 | Voice, captions, music | [Brindlebook](examples/sample-walk/out/walk-long.mp4) |
+| [`launch`](docs/styles/launch.md) | A headline, a counter, screens described in JSON with a cursor, and a logo close | 16:9, 9:16, 1:1 | Music and clicks, no voice | [CrewDash](examples/crewdash/out/launch-16x9.mp4) |
+
+`npx promoreel init my-app --style walk` (or `launch`) starts a project that renders as it is; edit its JSON from there.
 
 ## Quickstart (5 minutes)
 
@@ -97,6 +97,8 @@ open examples/generic/out/todo-promo.mp4      # 33 s, plus todo-promo-sheet.png
 On an M4 Max that took about 1 minute end to end, recording included. The first run also downloads the Kokoro model
 (~330 MB) and the Whisper model (~140 MB), and builds whisper.cpp.
 
+No app to record? `npx promoreel all examples/sample-walk` renders a feature walk from JSON alone.
+
 **Optional:** for the more natural Chatterbox voice (Python 3.11, about 2 GB), run `bash scripts/install-chatterbox.sh`.
 
 ## Talk to your agent
@@ -106,9 +108,9 @@ Open the repo in your agent and ask in plain words. Claude Code picks up the
 steps:
 1. check the tools;
 2. understand the app;
-3. propose ideas and wait for your pick;
+3. pick a style, propose ideas and wait for your pick;
 4. write the script;
-5. record, voice, caption and render;
+5. record (recorded style only), voice, caption and render;
 6. read the frames and fix what's off;
 7. report back.
 
@@ -121,6 +123,8 @@ steps:
 > Read AGENTS.md, then make a promo reel of ../my-app (npm run dev, port 5173). Suggest 3 ideas before recording.
 
 > Re-record the onboarding flow; the signup page changed. Then re-render the launch reel.
+
+> Make a 16:9 launch film of ../my-app for our landing page. Describe the screens; don't record.
 
 Ground rules the agent follows:
 - It never writes credentials to a file. Test-account logins come from `PROMOREEL_LOGIN_EMAIL` and
@@ -161,7 +165,7 @@ The rules come from listening back to real renders:
 - **Open with a question** the viewer answers in their head: "Losing hours between what you pay and what you bill?"
 - **One idea per line.**
 - **No ellipses.** TTS pauses robotically on "…". Use `|` in a line for a breath.
-- **Claim only what the footage shows.** No invented numbers.
+- **Claim only what the footage (or, for drawn screens, the app) shows.** No invented numbers.
 - **85–100 words for about 35 seconds.**
 - **Check the read-back.** `promoreel captions` prints what Whisper heard for each line.
   - In the promo, the voice said "our lotion" instead of "Remotion". Giving that line another `seed` fixed it.
@@ -174,6 +178,9 @@ Full guide: [`script-writing.md`](.claude/skills/promoreel/script-writing.md). E
 | | | |
 |---|---|---|
 | **[CrewDash](https://crewdash.ca)**: staffing software for small agencies | ["Losing hours?"](examples/crewdash/out/video-01.mp4), 42 s | GPS clock-in, checking a client's timesheet, validating the week, invoicing. A real product reel, from the project promoreel was extracted from. Chatterbox voice, a photo backdrop, every scene feature |
+| **CrewDash** feature walk | [Long](examples/crewdash/out/walk-long.mp4) · [short](examples/crewdash/out/walk-short.mp4) | `walk`: dispatch to invoice in drawn screens, one spec, two cuts. Chatterbox voice, music |
+| **CrewDash** launch film | [16:9](examples/crewdash/out/launch-16x9.mp4) · [9:16](examples/crewdash/out/launch.mp4) · [1:1](examples/crewdash/out/launch-1x1.mp4) | `launch`: headline, counter, screens with a cursor, logo close. Music only |
+| **Brindlebook** (a made-up app) | [Long](examples/sample-walk/out/walk-long.mp4) · [short](examples/sample-walk/out/walk-short.mp4) | `walk` from JSON alone: list, phone, stat and form screens. Kokoro voice |
 | **promoreel** itself | ["Make a promo reel of your app with Claude Code, free"](examples/promoreel-promo/out/promoreel-promo.mp4), 32 s | Made by its own CLI: a hook with counter cards, a `terminal` scene, the TodoMVC reel in a `showcase` frame. Chatterbox voice |
 | **TodoMVC** ([Playwright's demo](https://demo.playwright.dev/todomvc)) | ["Too much in your head?"](examples/generic/out/todo-promo.mp4), 33 s | The smoke test: add, tick, filter, clear. Kokoro voice, a gradient backdrop, jump cuts and zooms |
 
@@ -196,11 +203,11 @@ captions. See [`docs/voice-providers.md`](docs/voice-providers.md).
 
 | Command | Does |
 |---|---|
-| `promoreel init <dir> [--name] [--url]` | Scaffold a project: `brand.json`, a reel, a flow, `public/` |
+| `promoreel init <dir> [--style walk\|launch] [--name] [--url]` | Scaffold a project: `brand.json`, a spec, `public/`, and a flow for `recorded` |
 | `promoreel record <project> [flow…] [--only clip,…]` | Film flows at phone size |
 | `promoreel voice <project> [--reel id]` | Speak the script, time it, and write a listening sample and `out/<id>.timeline.json` |
 | `promoreel captions <project> [--reel id]` | Word timings with Whisper, plus what it heard |
-| `promoreel render <project> [--reel id] [--crf n]` | `out/<id>.mp4`, a contact sheet, `out/manifest.json` |
+| `promoreel render <project> [--reel id] [--crf n]` | `out/<id>.mp4` (one per cut and format), a contact sheet each, `out/manifest.json` |
 | `promoreel all <project> [--reel id] [--fresh]` | Record (what's missing) → voice → captions → render |
 | `promoreel sheet <video> [png] [--at 1,4.5,…]` | A contact sheet of any video |
 | `promoreel studio <project>` | Open Remotion Studio on a reel |
@@ -224,7 +231,7 @@ video with its path, sheet, duration, size and voice.
   - a gallery that plays and downloads from `manifest.json`.
 
   The CLI and manifest are already built for it: [`docs/studio-plan.md`](docs/studio-plan.md).
-- **More templates:** landscape (16:9) and square cuts, a before/after scene, background music.
+- **More scenes:** a before/after scene.
 - **Paid voices, opt-in only:** ElevenLabs and others behind `VoiceProvider`. Kokoro stays the default.
 
 ## FAQ

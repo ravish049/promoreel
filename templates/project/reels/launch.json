@@ -1,0 +1,48 @@
+{
+  "id": "launch",
+  "style": "launch",
+  "title": "{{NAME}}: launch film",
+  "formats": ["16x9", "9x16", "1x1"],
+  "music": { "bpm": 120 },
+  "counter": { "label": "Requests waiting", "value": 48 },
+  "scenes": [
+    {
+      "id": "hook",
+      "kind": "hook",
+      "seconds": 4.5,
+      "headline": [{ "text": "48 requests waiting." }, { "text": "No one owns them.", "accent": true }]
+    },
+    {
+      "id": "inbox",
+      "kind": "screen",
+      "seconds": 7,
+      "words": ["Read.", "Forward.", "Repeat."],
+      "screen": {
+        "kind": "list",
+        "title": "New requests",
+        "subtitle": "Today · 4 waiting",
+        "icon": "list-checks",
+        "badge": "48 open",
+        "rows": [
+          { "initials": "AM", "title": "Update the price list", "subtitle": "From Alex · Sales", "tag": "Urgent", "tagTone": "accent" },
+          { "initials": "JR", "title": "Order printer paper", "subtitle": "From Jo · Office" },
+          { "initials": "SK", "title": "Fix the booking form", "subtitle": "From Sam · Web", "tag": "Bug", "tagTone": "highlight" },
+          { "initials": "LT", "title": "Plan the team lunch", "subtitle": "From Lee · Ops" }
+        ],
+        "button": { "label": "Assign all", "busy": "Assigning…", "done": "All assigned" }
+      }
+    },
+    {
+      "id": "payoff",
+      "kind": "payoff",
+      "seconds": 7,
+      "words": ["Assigned.", "Tracked.", "Done."],
+      "cards": [
+        { "title": "Assign", "icon": "users", "done": "48 assigned", "lines": ["By team", "By workload", "By due date", "Owner notified"] },
+        { "title": "Track", "icon": "list-checks", "done": "All on track", "lines": ["Due dates", "Comments", "Status changes", "Reminders"] },
+        { "title": "Report", "icon": "line-chart", "done": "Week closed", "lines": ["Done this week", "Still open", "Who did what", "Ready to share"] }
+      ]
+    },
+    { "id": "logo", "kind": "logo", "seconds": 5.5, "tagline": ["Requests in,", "work done."], "line": "Request tracking for small teams." }
+  ]
+}

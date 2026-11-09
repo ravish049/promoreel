@@ -1,7 +1,7 @@
 {
   "name": "promoreel",
   "version": "0.1.0",
-  "description": "Turn your web app into 1080×1920 promo reels with your own Claude Code or Codex. Free, local, no API keys.",
+  "description": "Turn your web app into promo videos (recorded reels, feature walks, launch films) with your own Claude Code or Codex. Free, local, no API keys.",
   "keywords": [
     "remotion",
     "claude-code",
