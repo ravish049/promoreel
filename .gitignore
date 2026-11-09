@@ -5,8 +5,8 @@ node_modules/
 .env.*
 
 # tools the kit installs for itself (whisper.cpp + models, the Chatterbox venv)
-.cache/
-tools/
+/.cache
+/tools
 *.onnx
 ggml-*.bin
 
