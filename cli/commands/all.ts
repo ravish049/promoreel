@@ -38,9 +38,10 @@ export async function all(projectDir: string, opts: { reel?: string; fresh?: boo
     st.progress(30, 'recorded')
   }
   if (style !== 'launch') {
-    await voice(p.dir, { reel: spec.id })
+    // a walk's timing warnings print once, from render (voice and captions would print the same ones)
+    await voice(p.dir, { reel: spec.id, quietWalk: true })
     st.progress(55, 'voiced')
-    await captions(p.dir, { reel: spec.id })
+    await captions(p.dir, { reel: spec.id, quietWalk: true })
     st.progress(65, 'captioned')
   }
   const entries = await render(p.dir, { reel: spec.id, crf: opts.crf })

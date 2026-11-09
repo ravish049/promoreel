@@ -127,15 +127,20 @@ export type CounterTrack = {
   hide?: [number, number]
 }
 
+/** The counter's move to its corner takes at least this long (60 fps), and up to MOVE_MAX. */
+const MOVE_MIN = 20
+const MOVE_MAX = 36
+
 /**
  * When the counter moves from the hook's centre stage to its corner (global frames): it arrives before the next scene is
  * mounted (LEAD before the cut), so it never crosses that scene's card as the card enters. It starts once the counter has
- * rolled up when the hook allows, and takes at least 20 frames (60 fps).
+ * rolled up (hookPlan shortens the roll so a hook of 1.2 s or more leaves MOVE_MIN for the move); in a shorter hook it
+ * still takes 8 frames, and the plan has warned.
  */
 const toCornerSpan = (hook: HookPlan, F: (n: number) => number): [number, number] => {
   const end = hook.scene.to - F(LEAD)
   const rolled = hook.countUp ? hook.scene.from + hook.countUp[1] : hook.scene.from
-  return [Math.min(Math.max(rolled, end - F(36)), end - F(20)), end]
+  return [Math.min(Math.max(rolled, end - F(MOVE_MAX)), end - F(8)), end]
 }
 
 export type LaunchPlan = {
@@ -162,11 +167,19 @@ const clampF = (f: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, 
 /** Where a scene starts its exit: EXIT frames before its end, or half-way through a scene shorter than two exits. */
 const outOf = (len: number, fps: number) => Math.max(Math.round(len / 2), len - at60(EXIT, fps))
 
-function hookPlan(scene: LaunchTLScene, s: LaunchHook, fps: number, withCounter: boolean): HookPlan {
+function hookPlan(scene: LaunchTLScene, s: LaunchHook, fps: number, withCounter: boolean, warn: (m: string) => void): HookPlan {
   const F = (n: number) => at60(n, fps)
   const len = scene.to - scene.from
   const out = outOf(len, fps)
-  const countUp: [number, number] | undefined = withCounter ? [F(30), F(30) + fps] : undefined
+  let countUp: [number, number] | undefined
+  if (withCounter) {
+    // the counter rolls up for a second from F(30), and is done before its move to the corner (MOVE_MIN, ending LEAD
+    // before the cut); a short hook rolls faster (at least F(24)) and, if it must, earlier (not before its fade-in, F(16))
+    const by = len - F(LEAD) - F(MOVE_MIN)
+    const end = Math.max(F(16) + F(24), Math.min(F(30) + fps, by))
+    countUp = [Math.max(F(16), Math.min(F(30), end - F(24))), end]
+    if (end > by) warn(`scene "${scene.id}": ${(len / fps).toFixed(2)} s is too short for the counter to roll up and then move to its corner; give the hook ${Math.ceil(((F(16) + F(24) + F(MOVE_MIN) + F(LEAD)) / fps) * 10) / 10} s or more`)
+  }
   // the first row starts as the counter is mid-roll; each row after a short breath
   const start = withCounter ? F(56) : F(14)
   const gap = F(8)
@@ -198,7 +211,11 @@ function screenPlan(scene: LaunchTLScene, s: LaunchScreen, fps: number, beat: nu
   // every action lands by `last`, so it is seen before the scene leaves
   const last = Math.max(0, out - F(6))
   const p: Progress = {}
-  for (const [k, v] of Object.entries(s.at ?? {}) as [ScreenAction, number][]) if (typeof v === 'number') p[k] = clampF(sec(v), 0, last)
+  for (const [k, v] of Object.entries(s.at ?? {}) as [ScreenAction, number][]) {
+    if (typeof v !== 'number') continue
+    p[k] = clampF(sec(v), 0, last)
+    if (sec(v) > last) warn(`scene "${scene.id}": at.${k} (${v} s) is past the scene's last moment before its exit (${(last / fps).toFixed(2)} s of ${S.toFixed(2)} s); it is moved there. Give the scene more seconds or an earlier at.${k}`)
+  }
   const sc = s.screen
   if (p.fill === undefined && hasRows(sc)) p.fill = Math.min(last, F(14))
   if (p.count === undefined && counts(sc)) p.count = Math.min(last, (p.fill ?? F(10)) + sec(0.5))
@@ -267,7 +284,11 @@ function payoffPlan(scene: LaunchTLScene, s: LaunchPayoff, fps: number, withCoun
   const zero = countDown ? countDown[1] : checks[n - 1] + F(24)
   const pullBack: [number, number] = [zero + F(4), zero + F(72)]
   const wordsAt = (s.words ?? []).map((_, i) => zero + F(6) + i * F(9))
-  if (out - zero < Math.round(1.5 * fps)) warn(`scene "${scene.id}": the clear state holds ${((out - zero) / fps).toFixed(2)} s; give the payoff more seconds for a hold of at least 1.5 s`)
+  if (out - zero < Math.round(1.5 * fps)) {
+    // the scene exits EXIT frames before its end, so it needs zero + 1.5 s + EXIT for a 1.5 s hold of the clear state
+    const need = Math.ceil(((zero + Math.round(1.5 * fps) + at60(EXIT, fps)) / fps) * 10) / 10
+    warn(`scene "${scene.id}": ${n} card${n === 1 ? '' : 's'}${withCounter ? ' and the count-down' : ''} ${n === 1 && !withCounter ? 'needs' : 'need'} about ${need} s to land and then hold the clear state for 1.5 s; this payoff runs ${(len / fps).toFixed(2)} s, so give it "seconds": ${need} or more`)
+  }
   return { kind: 'payoff', scene, spec: s, land, landed, checks, countDown, zero, pullBack, wordsAt, out }
 }
 
@@ -300,7 +321,7 @@ export function buildLaunchPlan(spec: LaunchSpec, fps = spec.fps ?? MOTION_FPS):
     const scene = tl.scenes[i]
     switch (s.kind) {
       case 'hook':
-        return hookPlan(scene, s, fps, showsCounter(s))
+        return hookPlan(scene, s, fps, showsCounter(s), warn)
       case 'screen':
         return screenPlan(scene, s, fps, tl.beat, warn)
       case 'payoff':

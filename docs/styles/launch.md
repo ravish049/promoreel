@@ -8,9 +8,11 @@ that clicks, cards that tick off, and a logo close. It renders in 16:9 (1920×10
 one shape, and the message fits in a few words on screen. Keep the screens and claims true to what the app does.
 
 ## Make one
+Run these inside your clone of promoreel, after the [Quickstart](../../README.md#quickstart-5-minutes) (`git clone`,
+`npm install`). `projects/` is git-ignored.
 ```bash
-npx promoreel init my-app --style launch   # brand.json, reels/launch.json (a working example to edit)
-npx promoreel all my-app                   # render only: out/launch-16x9.mp4, out/launch.mp4, out/launch-1x1.mp4
+npx promoreel init projects/my-app --style launch   # brand.json, reels/launch.json (a working example to edit)
+npx promoreel all projects/my-app                   # render only: out/launch-16x9.mp4, out/launch.mp4, out/launch-1x1.mp4
 ```
 
 ## The fields you usually edit
@@ -18,7 +20,7 @@ npx promoreel all my-app                   # render only: out/launch-16x9.mp4, o
 |---|---|
 | `formats` | Which shapes to render: `16x9`, `9x16`, `1x1` |
 | `counter` | The number that rolls up in the hook and drops to `counterTo` (default 0) in the payoff |
-| `scenes[]` | In order, each with `id`, `kind` and `seconds`: |
+| `scenes[]` | In order, each with `id`, `kind` and `seconds` (a `screen` or `payoff` needs at least 1, and reads well from 1.5): |
 | `hook` | `headline`: rows of words; `"accent": true` colours a row |
 | `screen` | One drawn `screen` (`list`, `table`, `form`, `stat` or `phone`), `words` over it, and `at` to time its click |
 | `payoff` | `cards` that land one by one and tick off |

@@ -4,7 +4,8 @@
 // Each line's WAV is transcribed on its own; Whisper's timings are laid onto the line's OWN words (`text`, else `say`),
 // so the captions spell things your way ("CrewDash", "38") whatever Whisper heard. What Whisper heard is reported per
 // line: the check for a slurred word (if a line reads back wrong, give it another `seed` or reword it).
-// For a walk, every cut is then laid out on the new word timings and its timing warnings (walkWarnings) print.
+// For a walk, every cut is then laid out on the new word timings and its timing warnings (walkWarnings) print (not with
+// quietWalk: `all` passes it, as render prints the same warnings).
 import { downloadWhisperModel, installWhisperCpp, toCaptions, transcribe, type WhisperModel } from '@remotion/install-whisper-cpp'
 import type { Caption } from '@remotion/captions'
 import { execFileSync } from 'node:child_process'
@@ -18,7 +19,7 @@ import { align, words } from '../lib/align'
 
 const VERSION = '1.5.5'
 
-export async function captions(projectDir: string, opts: { reel?: string; voice?: string }) {
+export async function captions(projectDir: string, opts: { reel?: string; voice?: string; quietWalk?: boolean }) {
   const st = step('captions')
   const p = loadProject(projectDir)
   const { spec } = pickReel(p, opts.reel)
@@ -59,7 +60,7 @@ export async function captions(projectDir: string, opts: { reel?: string; voice?
   }
   fs.writeFileSync(path.join(dir, 'captions.json'), JSON.stringify(out, null, 2) + '\n')
   // a walk's word anchors land on these timings: check every cut now, not only at render
-  if (r.style === 'walk') {
+  if (r.style === 'walk' && !opts.quietWalk) {
     const ms = Object.fromEntries(Object.entries(durations).map(([k, x]) => [k, x.durationMs]))
     for (const w of walkWarnings(resolveWalk(r, p.brand), ms, out)) st.warn(w)
   }

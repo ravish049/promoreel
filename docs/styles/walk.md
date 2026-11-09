@@ -8,9 +8,11 @@ there is nothing to record. One spec renders several cuts, for example a 35-seco
 screens hold data you can't show. Keep the screens and claims true to what the app does.
 
 ## Make one
+Run these inside your clone of promoreel, after the [Quickstart](../../README.md#quickstart-5-minutes) (`git clone`,
+`npm install`). `projects/` is git-ignored.
 ```bash
-npx promoreel init my-app --style walk     # brand.json, reels/walk.json (a working example to edit)
-npx promoreel all my-app                   # voice (Kokoro) → captions → out/walk-long.mp4, out/walk-short.mp4
+npx promoreel init projects/my-app --style walk   # brand.json, reels/walk.json (a working example to edit)
+npx promoreel all projects/my-app                 # voice (Kokoro) → captions → out/walk-long.mp4, out/walk-short.mp4
 ```
 
 ## The fields you usually edit
@@ -22,7 +24,7 @@ npx promoreel all my-app                   # voice (Kokoro) → captions → out
 | `steps[].anchors` | When the screen moves, pinned to a spoken word: `{ "click": { "word": "send" } }` |
 | `cuts` | Which steps each video shows and which lines it speaks. Each cut is its own video |
 | `hook`, `close` | The opening headline, and the close's tagline and call to action |
-| `voice.use`, `music` | The voice (Kokoro by default, or `chatterbox`) and the music bed (`bpm`, `beatSync`, or your own `src`) |
+| `voice.use`, `music` | The voice (required: a Kokoro voice such as `af_heart`, or `chatterbox`) and the music bed (`bpm`, `beatSync`, or your own `src`) |
 
 Colours, font, logo and the fallback tagline and CTA come from `brand.json`.
 

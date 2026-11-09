@@ -1,6 +1,8 @@
 // Unit tests for the launch plan's edge cases: short screen scenes keep every event inside the scene and the press
 // before its done state, kinetic words fit the scene, an early click still gets a cursor that starts on screen (and no
-// push-in that would finish after it), and a one-part tagline plans. At 60 and 30 fps.   npm test
+// push-in that would finish after it), a one-part tagline plans, an `at` past the scene is moved in with a warning, the
+// counter moves to its corner only after its count-up, and a short payoff names the seconds it needs. At 60 and 30 fps.
+//   npm test
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { LaunchScreen, LaunchSpec } from '../reel/spec'
@@ -116,5 +118,64 @@ test('a one-part tagline plans its beats (the logo draws no accent part)', () =>
     assert.deepEqual(logo.spec.tagline, ['Every invoice, paid.'])
     const b = logoBeats(logo, 3, fps)
     assert.ok(b.tagEnd >= logo.tagline && b.line > b.tagEnd && b.cta > b.line)
+  }
+})
+
+test('an at value past the scene is moved inside it, with a warning naming it', () => {
+  for (const fps of [60, 30]) {
+    const { plan, sc } = screenOf(film(screen({ at: { click: 9 } })), fps)
+    inside(plan, sc, `at.click 9 in a 6 s scene at ${fps} fps`)
+    assert.ok(plan.warnings.some((w) => w.includes('at.click (9 s)') && w.includes('moved')), plan.warnings.join(' | '))
+    // an at inside the scene is left alone, without a warning
+    const ok = screenOf(film(screen({ at: { click: 3 } })), fps)
+    assert.equal(ok.sc.progress.click, 3 * fps)
+    assert.ok(!ok.plan.warnings.some((w) => w.includes('at.click')))
+  }
+})
+
+test("the counter moves to its corner only after its count-up, even in a short hook", () => {
+  for (const fps of [60, 30]) {
+    for (const seconds of [1.5, 2, 3, 4]) {
+      const spec: LaunchSpec = {
+        ...film(screen()),
+        counter: { label: 'Waiting', value: 90 },
+      }
+      spec.scenes[0] = { id: 'hook', kind: 'hook', seconds, headline: [{ text: 'Ninety waiting.' }] }
+      const plan = buildLaunchPlan(spec, fps)
+      const c = plan.counter!
+      const what = `${seconds} s hook at ${fps} fps`
+      assert.ok(c.rollUp![1] > c.rollUp![0], `${what}: it rolls up`)
+      assert.ok(c.toCorner![0] >= c.rollUp![1], `${what}: the move (${c.toCorner}) starts after the count-up (${c.rollUp})`)
+      assert.ok(c.toCorner![1] - c.toCorner![0] >= Math.round((20 * fps) / 60), `${what}: the move takes at least 20 frames at 60 fps`)
+      assert.ok(c.toCorner![1] <= plan.tl.scenes[0].to - Math.round((12 * fps) / 60), `${what}: in its corner before the next scene mounts`)
+      assert.ok(!plan.warnings.some((w) => w.includes('counter')), `${what}: no warning`)
+    }
+    // the measured case: a 1.5 s hook rolled to 90 while it moved over 58–78; now it rolls over 30–58, then moves
+    if (fps === 60) {
+      const spec: LaunchSpec = { ...film(screen()), counter: { label: 'Waiting', value: 90 } }
+      spec.scenes[0] = { id: 'hook', kind: 'hook', seconds: 1.5, headline: [{ text: 'Hi.' }] }
+      const c = buildLaunchPlan(spec, 60).counter!
+      assert.deepEqual([c.rollUp, c.toCorner], [[30, 58], [58, 78]])
+    }
+    // a 1 s hook is too short for both, and says so
+    const short: LaunchSpec = { ...film(screen()), counter: { label: 'Waiting', value: 90 } }
+    short.scenes[0] = { id: 'hook', kind: 'hook', seconds: 1, headline: [{ text: 'Hi.' }] }
+    assert.ok(buildLaunchPlan(short, fps).warnings.some((w) => w.includes('too short for the counter') && w.includes('1.2 s')))
+  }
+})
+
+test('a payoff too short for its clear state says how many seconds it needs, never a negative hold', () => {
+  for (const fps of [60, 30]) {
+    const spec: LaunchSpec = { ...film(screen()), counter: { label: 'Waiting', value: 90 } }
+    spec.scenes.splice(2, 0, { id: 'payoff', kind: 'payoff', seconds: 1, cards: [{ title: 'A' }, { title: 'B' }, { title: 'C' }] })
+    const w = buildLaunchPlan(spec, fps).warnings.find((x) => x.includes('scene "payoff"'))
+    assert.ok(w, `${fps} fps: warns`)
+    assert.doesNotMatch(w!, /-\d/, `${fps} fps: no negative number in "${w}"`)
+    const need = Number(/"seconds": ([\d.]+)/.exec(w!)?.[1])
+    assert.ok(need > 1, `${fps} fps: names the seconds it needs (${w})`)
+    // giving it those seconds clears the warning (without beat sync, so the cut lands where asked)
+    spec.scenes[2] = { ...spec.scenes[2], seconds: need } as LaunchSpec['scenes'][number]
+    spec.music = { beatSync: false }
+    assert.ok(!buildLaunchPlan(spec, fps).warnings.some((x) => x.includes('scene "payoff"')), `${fps} fps: ${need} s is enough`)
   }
 })

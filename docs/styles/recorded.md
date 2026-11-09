@@ -8,9 +8,11 @@ Whisper captions it.
 feature. If you can't run the app, or want a landscape video, use [walk](walk.md) or [launch](launch.md).
 
 ## Make one
+Run these inside your clone of promoreel, after the [Quickstart](../../README.md#quickstart-5-minutes) (`git clone`,
+`npm install`). `projects/` is git-ignored.
 ```bash
-npx promoreel init my-app --url http://localhost:3000     # brand.json, reels/first-reel.json, flows/first-flow.flow.json
-npx promoreel all my-app                                  # record → voice → captions → render
+npx promoreel init projects/my-app --url http://localhost:3000   # brand.json, reels/first-reel.json, flows/first-flow.flow.json
+npx promoreel all projects/my-app                                # record → voice → captions → render
 ```
 `--style recorded` is the default, so you don't need to pass it.
 
