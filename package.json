@@ -36,6 +36,7 @@
   "scripts": {
     "promoreel": "node bin/promoreel.cjs",
     "studio": "node bin/promoreel.cjs studio",
+    "gallery": "remotion studio src/screens/gallery-entry.ts",
     "doctor": "node bin/promoreel.cjs doctor",
     "lint": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test cli/lib/*.test.ts cli/audio/*.test.ts src/motion/*.test.ts src/walk/*.test.ts"
