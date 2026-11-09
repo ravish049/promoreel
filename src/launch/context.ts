@@ -6,6 +6,7 @@ import { EASE, tween } from '../motion'
 import type { Theme } from '../reel/theme'
 import type { LaunchHook, LaunchInput } from '../reel/spec'
 import { fitSize, textWidth, wrapWords } from '../walk/context'
+import type { Safe } from '../motion/layout'
 import { counterHeight, type LaunchLayout, type Rect } from './layout'
 import { EXIT, at60, counterAt, type CounterTrack, type LaunchPlan, type LaunchTLScene } from './plan'
 
@@ -85,10 +86,9 @@ export function hookGeometry(t: Theme, lay: LaunchLayout, spec: LaunchHook, word
 
 /**
  * The top of a block `h` tall, centred on the canvas when it fits in the safe area there, else as close to the centre
- * as the safe area allows (y from the canvas centre).
+ * as the safe area allows (y from the canvas centre). `S` is the area to centre in (default: the safe area).
  */
-export const centredTop = (lay: LaunchLayout, h: number) => {
-  const S = lay.safe
+export const centredTop = (lay: LaunchLayout, h: number, S: Safe = lay.safe) => {
   if (h >= S.bottom - S.top) return (S.top + S.bottom) / 2 - h / 2
   return Math.min(S.bottom - h, Math.max(S.top, -h / 2))
 }

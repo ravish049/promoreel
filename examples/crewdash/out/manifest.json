@@ -1,6 +1,6 @@
 {
   "project": "crewdash",
-  "updated": "2026-11-09T18:44:29.907Z",
+  "updated": "2026-11-09T18:59:26.506Z",
   "videos": [
     {
       "id": "launch-1x1",
@@ -10,8 +10,8 @@
       "durationSec": 30.02,
       "width": 1080,
       "height": 1080,
-      "sizeBytes": 6864477,
-      "created": "2026-11-09T18:44:29.906Z",
+      "sizeBytes": 6723655,
+      "created": "2026-11-09T18:59:26.506Z",
       "spec": "reels/launch.json",
       "format": "1x1"
     },
@@ -23,8 +23,8 @@
       "durationSec": 30.02,
       "width": 1080,
       "height": 1920,
-      "sizeBytes": 8484028,
-      "created": "2026-11-09T18:44:02.713Z",
+      "sizeBytes": 8284094,
+      "created": "2026-11-09T18:58:59.433Z",
       "spec": "reels/launch.json",
       "format": "9x16"
     },
@@ -36,8 +36,8 @@
       "durationSec": 30.02,
       "width": 1920,
       "height": 1080,
-      "sizeBytes": 9901367,
-      "created": "2026-11-09T18:43:29.363Z",
+      "sizeBytes": 9882439,
+      "created": "2026-11-09T18:58:26.311Z",
       "spec": "reels/launch.json",
       "format": "16x9"
     },

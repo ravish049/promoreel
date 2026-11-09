@@ -75,6 +75,8 @@ export type ScreenPlan = {
   /** The camera pushes in for the click over `in` and back out over `out`. */
   zoom?: { in: [number, number]; out: [number, number] }
   wordsAt: number[]
+  /** The card starts entering here: a little before the cut, or on it after a hook, whose headline is gone by then. */
+  enterAt: number
   out: number
 }
 
@@ -202,7 +204,7 @@ function hookPlan(scene: LaunchTLScene, s: LaunchHook, fps: number, withCounter:
   return { kind: 'hook', scene, spec: s, wordsAt, countUp, out }
 }
 
-function screenPlan(scene: LaunchTLScene, s: LaunchScreen, fps: number, beat: number, warn: (m: string) => void): ScreenPlan {
+function screenPlan(scene: LaunchTLScene, s: LaunchScreen, fps: number, beat: number, afterHook: boolean, warn: (m: string) => void): ScreenPlan {
   const F = (n: number) => at60(n, fps)
   const sec = (x: number) => Math.round(x * fps)
   const len = scene.to - scene.from
@@ -267,7 +269,9 @@ function screenPlan(scene: LaunchTLScene, s: LaunchScreen, fps: number, beat: nu
     wordsAt = Array.from({ length: n }, (_, i) => Math.round(first + i * gap))
     if (n > 1 && gap < F(8)) warn(`scene "${scene.id}": ${n} words in ${S.toFixed(2)} s land ${(gap / fps).toFixed(2)} s apart, too fast to read; give the scene more seconds or use fewer words`)
   }
-  return { kind: 'screen', scene, spec: s, progress: p, cursor, zoom, wordsAt, out }
+  // after a hook the card waits for the cut: the headline's exit ends there, so the card never enters under it
+  const enterAt = afterHook ? 0 : -F(8)
+  return { kind: 'screen', scene, spec: s, progress: p, cursor, zoom, wordsAt, enterAt, out }
 }
 
 function payoffPlan(scene: LaunchTLScene, s: LaunchPayoff, fps: number, withCounter: boolean, warn: (m: string) => void): PayoffPlan {
@@ -323,7 +327,7 @@ export function buildLaunchPlan(spec: LaunchSpec, fps = spec.fps ?? MOTION_FPS):
       case 'hook':
         return hookPlan(scene, s, fps, showsCounter(s), warn)
       case 'screen':
-        return screenPlan(scene, s, fps, tl.beat, warn)
+        return screenPlan(scene, s, fps, tl.beat, spec.scenes[i - 1]?.kind === 'hook', warn)
       case 'payoff':
         return payoffPlan(scene, s, fps, !!counter, warn)
       case 'logo':
