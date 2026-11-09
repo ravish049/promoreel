@@ -167,12 +167,13 @@ test('the payoff: cards land one by one, every card has landed before the first 
   assert.ok(buildLaunchPlan(short, 60).warnings.some((w) => w.includes('clear state')))
 })
 
-test('the counter rolls up in the hook, moves to its corner at the cut, drops to counterTo with its glow turning, and leaves before the logo', () => {
+test('the counter rolls up in the hook, moves to its corner before the cut, drops to counterTo with its glow turning, and leaves before the logo', () => {
   const plan = buildLaunchPlan(spec(), 60)
   const c = plan.counter!
   assert.equal(c.digits, 2)
   assert.deepEqual(c.rollUp, [30, 90])
-  assert.ok(c.toCorner![0] < 240 && c.toCorner![1] > 240)
+  // in its corner before the next scene is mounted (LEAD before the cut), so it never crosses the entering card
+  assert.ok(c.toCorner![0] >= 90 && c.toCorner![1] <= 240 - 12)
   assert.equal(counterAt(c, 0).value, 0)
   assert.equal(counterAt(c, 90).value, 86)
   assert.equal(counterAt(c, 400).value, 86)

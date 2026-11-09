@@ -8,7 +8,7 @@ import { Camera, EASE, Words, camAt, drift, enter, tween } from '../../motion'
 import { Logo } from '../../reel/parts'
 import { onColor, rgba, useTheme } from '../../reel/theme'
 import { fitSize, textWidth } from '../../walk/context'
-import { ROW_H, WORD_GAP, centredTop, fitRows, useLaunch, type Row } from '../context'
+import { ROW_H, WORD_GAP, centredTop, deepInk, fitRows, useLaunch, type Row } from '../context'
 import { at60, logoBeats, type LogoPlan } from '../plan'
 
 export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
@@ -35,8 +35,9 @@ export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
   const nameW = textWidth(name, nameSize, 800, t.font, -0.035)
 
   // the tagline: one row if it fits at 80 % of its size, else its two parts on two rows
-  const a = tagline ? tagline[0].split(/\s+/).filter(Boolean) : []
-  const b = tagline ? tagline[1].split(/\s+/).filter(Boolean) : []
+  // a tagline may have one part only: the second is then empty (and nothing is drawn in the accent colour)
+  const a = (tagline?.[0] ?? '').split(/\s+/).filter(Boolean)
+  const b = (tagline?.[1] ?? '').split(/\s+/).filter(Boolean)
   const all = [...a, ...b]
   const beats = logoBeats(p, all.length, fps)
   const at = all.map((_, i) => p.tagline + i * p.taglineGap)
@@ -115,7 +116,7 @@ export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
                 opacity: glow,
               }}
             />
-            <div style={{ position: 'relative', filter: `drop-shadow(0 ${mark * 0.1}px ${mark * 0.2}px ${rgba('#000000', 0.45)})` }}>
+            <div style={{ position: 'relative', filter: `drop-shadow(0 ${mark * 0.1}px ${mark * 0.2}px ${rgba(deepInk(t), 0.45)})` }}>
               <Logo size={mark} pop={tile} />
             </div>
           </div>

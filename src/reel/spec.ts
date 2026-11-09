@@ -537,8 +537,8 @@ export type LaunchLogo = LaunchSceneBase & {
   kind: 'logo'
   /** The name beside the mark (default brand.name). */
   title?: string
-  /** The words, then the part in the accent colour (default brand.outro.tagline). */
-  tagline?: [string, string]
+  /** The words, then the part in the accent colour (optional; default brand.outro.tagline). */
+  tagline?: [string, string?]
   /** A one-line description under the tagline (default brand.outro.title). */
   line?: string
   /** The call-to-action pill (default brand.outro.cta). */
