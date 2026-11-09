@@ -52,6 +52,7 @@ async function writeWalkBed({ project: p, job, step: st }: RenderContext) {
   const words = fs.existsSync(capsFile) ? readJson<WalkWords>(capsFile) : undefined
   const durations = Object.fromEntries(Object.entries(lines).map(([k, v]) => [k, v.durationMs]))
   const tl = buildWalkTimeline(spec as WalkSpec, job.cut!, durations, words)
+  for (const w of tl.warnings) st.warn(`${job.name}: ${w}`)
   const audio = walkAudioJob(spec as WalkSpec, tl, { resolveMusic: (src) => path.resolve(p.publicDir, src) })
   const out = path.join(p.publicDir, 'audio', `${job.name}.wav`)
   const bed = writeBed(audio, out)

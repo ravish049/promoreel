@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import type { Format, LaunchSpec } from '../reel/spec'
 import { FORMAT_SIZE } from '../reel/shared'
 import { outputName } from '../../cli/lib/project'
-import { DEFAULT_LAUNCH_BPM, buildLaunchPlan, buildLaunchTimeline, counterAt, type PayoffPlan, type ScreenPlan } from './plan'
+import { DEFAULT_LAUNCH_BPM, buildLaunchPlan, buildLaunchTimeline, counterAt, hudAway, type PayoffPlan, type ScreenPlan } from './plan'
 import { launchAudioJob, launchBedFile } from './audio'
 import { counterHeight, launchLayout, rectH, rectW, screenBox } from './layout'
 
@@ -208,4 +208,15 @@ test('layout: the stage, the cards and the counter stay inside the safe area in 
     const box = screenBox({ kind: 'list', rows: [{ title: 'a' }, { title: 'b' }] }, lay.stage({ words: true, hud: 300 }))
     assert.ok(box.w > 0 && box.h > 0)
   }
+})
+
+test('the counter is fully out of the way for the whole push-in, and back once the camera is at rest', () => {
+  const plan = buildLaunchPlan(spec(), 60)
+  const sc = plan.scenes.find((p): p is ScreenPlan => p.kind === 'screen')!
+  const z = sc.zoom!
+  const g = (f: number) => sc.scene.from + f
+  for (let f = z.in[0]; f <= z.out[1]; f++) assert.equal(hudAway(plan, g(f)), 1, `gone at local frame ${f}`)
+  assert.equal(hudAway(plan, g(z.in[0] - 18)), 0)
+  assert.equal(hudAway(plan, g(z.out[1] + 18)), 0)
+  assert.ok(hudAway(plan, g(z.in[0] - 9)) > 0 && hudAway(plan, g(z.in[0] - 9)) < 1)
 })

@@ -18,7 +18,7 @@ import { useTextReady } from '../walk/context'
 import { LAUNCH_SFX, launchBedFile } from './audio'
 import { LaunchContext, counterCardW, counterValue, hookGeometry, useLaunch, type HookGeometry } from './context'
 import { counterHeight, launchLayout } from './layout'
-import { LEAD, at60, buildLaunchPlan, zoomAt, type ScenePlan } from './plan'
+import { LEAD, at60, buildLaunchPlan, hudAway, type ScenePlan } from './plan'
 import { HookScene } from './scenes/Hook'
 import { ScreenScene } from './scenes/Screen'
 import { PayoffScene } from './scenes/Payoff'
@@ -200,8 +200,8 @@ const HudCounter: React.FC<{ g: number }> = ({ g }) => {
   const inn = enter(g, c.show, F(30), fps)
   const out = c.hide ? tween(g, c.hide[0], c.hide[1], 0, 1, EASE.in) : 0
   const { value, ok } = counterValue(c, g)
-  // on a tall or square canvas the camera's push-in for a click runs under the counter: it steps back meanwhile
-  const zoom = lay.L.wide ? 0 : zoomAt(plan, g, EASE.inOut)
+  // the counter steps out before the camera pushes in for a click and returns once it is back at rest, so the scaled screen never runs under it
+  const away = hudAway(plan, g, EASE.inOut)
   return (
     <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0 }}>
       <div
@@ -212,7 +212,7 @@ const HudCounter: React.FC<{ g: number }> = ({ g }) => {
           width: w,
           transformOrigin: '50% 50%',
           transform: `scale(${s * (0.94 + 0.06 * inn)})`,
-          opacity: Math.min(1, inn * 1.5) * (1 - out) * (1 - zoom),
+          opacity: Math.min(1, inn * 1.5) * (1 - out) * (1 - away),
         }}
       >
         <Counter value={value} digits={c.digits} label={c.label} ok={ok} size={size} width={w} />

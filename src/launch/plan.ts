@@ -311,17 +311,28 @@ export function buildLaunchPlan(spec: LaunchSpec, fps = spec.fps ?? MOTION_FPS):
   return { fps, tl, scenes, counter: track, clicks: clicks.sort((a, b) => a - b), ticks: ticks.sort((a, b) => a - b), warnings }
 }
 
-/** How far the camera is pushed in for a click at global frame g (0 at rest, 1 fully in), eased. */
-export const zoomAt = (plan: LaunchPlan, g: number, ease: (t: number) => number = (t) => t): number => {
+/** Frames (60 fps) the counter takes to step out before a click's push-in and back after it. */
+export const HUD_FADE = 18
+
+/**
+ * How far the counter has stepped out of the way of a click's push-in at global frame g (0 = in its corner, 1 = gone):
+ * it is fully gone before the camera starts to push in and comes back only once the camera is back at rest, so the
+ * scaled screen never runs under it.
+ */
+export const hudAway = (plan: LaunchPlan, g: number, ease: (t: number) => number = (t) => t): number => {
+  const d = at60(HUD_FADE, plan.fps)
+  let away = 0
   for (const p of plan.scenes) {
     if (p.kind !== 'screen' || !p.zoom) continue
     const f = g - p.scene.from
-    if (f < p.zoom.in[0] || f > p.zoom.out[1]) continue
-    const a = Math.min(1, (f - p.zoom.in[0]) / Math.max(1, p.zoom.in[1] - p.zoom.in[0]))
-    const b = Math.min(1, Math.max(0, (f - p.zoom.out[0]) / Math.max(1, p.zoom.out[1] - p.zoom.out[0])))
-    return ease(Math.min(a, 1 - b))
+    const a = p.zoom.in[0] - d
+    const b = p.zoom.out[1] + d
+    if (f <= a || f >= b) continue
+    const outT = Math.min(1, (f - a) / d)
+    const backT = Math.min(1, Math.max(0, (f - p.zoom.out[1]) / d))
+    away = Math.max(away, ease(Math.min(outT, 1 - backT)))
   }
-  return 0
+  return away
 }
 
 /** The counter's value at global frame g, and how far its glow has turned to success (0–1). */
