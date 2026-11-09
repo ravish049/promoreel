@@ -38,7 +38,7 @@
     "studio": "node bin/promoreel.cjs studio",
     "doctor": "node bin/promoreel.cjs doctor",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test cli/lib/*.test.ts $(find src -name '*.test.ts')"
+    "test": "tsx --test $(find cli src -name '*.test.ts')"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.539",
