@@ -38,7 +38,7 @@
     "studio": "node bin/promoreel.cjs studio",
     "doctor": "node bin/promoreel.cjs doctor",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test cli/lib/*.test.ts"
+    "test": "tsx --test cli/lib/*.test.ts $(find src -name '*.test.ts')"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.539",
@@ -48,6 +48,7 @@
     "@remotion/google-fonts": "4.0.539",
     "@remotion/install-whisper-cpp": "4.0.539",
     "@remotion/media": "4.0.539",
+    "@remotion/motion-blur": "4.0.539",
     "@remotion/renderer": "4.0.539",
     "@remotion/transitions": "4.0.539",
     "kokoro-js": "1.2.1",
