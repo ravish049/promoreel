@@ -8,11 +8,14 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { bundle } from '@remotion/bundler'
 import { renderMedia, selectComposition } from '@remotion/renderer'
-import type { Style, VideoSpec, WalkSpec } from '../../src/reel/spec'
-import { voiceDir, type ResolvedWalk } from '../../src/reel/shared'
+import type { LaunchSpec, Style, VideoSpec, WalkSpec } from '../../src/reel/spec'
+import { voiceDir, type ResolvedLaunch, type ResolvedWalk } from '../../src/reel/shared'
 import { buildWalkTimeline, type WalkWords } from '../../src/walk/timeline'
 import { walkAudioJob } from '../../src/walk/audio'
+import { buildLaunchPlan } from '../../src/launch/plan'
+import { LAUNCH_SFX_DIR, launchAudioJob, launchBedFile } from '../../src/launch/audio'
 import { writeBed } from '../audio/synth'
+import { writeLaunchSfx } from '../audio/sfx'
 import { masterMp4 } from '../audio/master'
 import { KIT, ensurePublic, loadProject, pickReel, readJson, rel, renderJobs, type Project, type RenderJob } from '../lib/project'
 import { step } from '../lib/progress'
@@ -32,7 +35,7 @@ export type RenderHook = (ctx: RenderContext) => void | Promise<void>
 export const RENDER_HOOKS: Record<Style, { beforeRender: RenderHook[]; afterRender: RenderHook[] }> = {
   recorded: { beforeRender: [], afterRender: [] },
   walk: { beforeRender: [writeWalkBed], afterRender: [masterInPlace] },
-  launch: { beforeRender: [], afterRender: [] },
+  launch: { beforeRender: [writeLaunchAudio], afterRender: [masterInPlace] },
 }
 
 /**
@@ -53,6 +56,21 @@ async function writeWalkBed({ project: p, job, step: st }: RenderContext) {
   const out = path.join(p.publicDir, 'audio', `${job.name}.wav`)
   const bed = writeBed(audio, out)
   st.log(`${job.name}: ${bed.source === 'track' ? 'music track' : `music bed at ${audio.bpm} bpm`}, ${audio.sfx.length} sound effects, ${audio.voiceSpans.length} voice spans → ${rel(p, out)}`)
+}
+
+/**
+ * A launch film's music bed, on the scene cuts of its plan (at the video's fps): public/audio/<video name>.wav; and the
+ * click / tick one-shots the composition plays on cursor clicks, card landings and checkmarks: public/sfx/launch/.
+ */
+async function writeLaunchAudio({ project: p, job, step: st }: RenderContext) {
+  const spec = job.props as ResolvedLaunch
+  const plan = buildLaunchPlan(spec as LaunchSpec, spec.fps)
+  for (const w of plan.warnings) st.warn(`${job.name}: ${w}`)
+  const audio = launchAudioJob(spec, plan, { resolveMusic: (src) => path.resolve(p.publicDir, src) })
+  const out = path.join(p.publicDir, launchBedFile(spec.id, job.format))
+  const bed = writeBed(audio, out)
+  writeLaunchSfx(path.join(p.publicDir, LAUNCH_SFX_DIR))
+  st.log(`${job.name}: ${bed.source === 'track' ? 'music track' : `music bed at ${audio.bpm} bpm`}, ${plan.clicks.length} clicks, ${plan.ticks.length} ticks → ${rel(p, out)}`)
 }
 
 /** Masters the rendered mp4's sound in place (−15 LUFS, true peak ≤ −1.5 dBTP). */
