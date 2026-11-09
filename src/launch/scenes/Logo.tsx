@@ -9,6 +9,7 @@ import { Logo } from '../../reel/parts'
 import { onColor, rgba, useTheme } from '../../reel/theme'
 import { fitSize, textWidth } from '../../walk/context'
 import { ROW_H, WORD_GAP, centredTop, deepInk, fitRows, useLaunch, type Row } from '../context'
+import { LOGO_DRIFT, LOGO_PUSH, fitLogoRow } from '../layout'
 import { at60, logoBeats, type LogoPlan } from '../plan'
 
 export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
@@ -16,7 +17,8 @@ export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
   const { plan, lay } = useLaunch()
   const fps = plan.fps
   const F = (n: number) => at60(n, fps)
-  const S = lay.safe
+  // laid out in the safe area shrunk by the push-in and drift, so the pushed-in stack ends inside the safe area
+  const S = lay.logo.safe
   const maxW = lay.logo.maxW
   const s = p.spec
   const name = s.title ?? t.brand.name
@@ -24,14 +26,8 @@ export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
   const line = s.line ?? t.brand.outro?.title
   const cta = s.cta ?? t.brand.outro?.cta ?? ''
 
-  // the name: as large as fits beside the mark; a short name gets a mark in proportion
-  const gap = lay.logo.mark * 0.2
-  let mark = lay.logo.mark
-  let nameSize = fitSize(name, maxW - mark - gap, lay.logo.name, 800, t.font, -0.035)
-  if (nameSize * 1.15 < mark) {
-    mark = Math.max(mark * 0.6, Math.round(nameSize * 1.15))
-    nameSize = fitSize(name, maxW - mark - gap, lay.logo.name, 800, t.font, -0.035)
-  }
+  // the mark and the name: as large as fits in the row, in proportion (a long name shrinks both)
+  const { mark, gap, nameSize } = fitLogoRow((size) => textWidth(name, size, 800, t.font, -0.035), maxW, lay.logo.mark, lay.logo.name)
   const nameW = textWidth(name, nameSize, 800, t.font, -0.035)
 
   // the tagline: one row if it fits at 80 % of its size, else its two parts on two rows
@@ -64,13 +60,13 @@ export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
     (all.length ? tag.size * 0.55 + tag.rows.length * tag.size * ROW_H : 0) +
     (line ? lineSize * 0.8 + lineSize * 1.35 * Math.max(1, Math.ceil(lineW / maxW)) : 0) +
     (cta ? lay.logo.cta * 1.3 + ctaSize * 1.25 + 2 * Math.round(lay.logo.cta * 0.62) : 0)
-  const top = centredTop(lay, stackH)
+  const top = centredTop(lay, stackH, S)
 
   const len = p.scene.to - p.scene.from
   const cam = camAt(
     [
       { f: 0, x: 0, y: 0, s: 1 },
-      { f: len, x: 0, y: 0, s: 1.03 },
+      { f: len, x: 0, y: 0, s: LOGO_PUSH },
     ],
     f,
   )
@@ -99,7 +95,7 @@ export const LogoScene: React.FC<{ p: LogoPlan; f: number }> = ({ p, f }) => {
           justifyContent: 'center',
           fontFamily: t.font,
           opacity: inn,
-          transform: `translateY(${drift(f, 4, F(320))}px)`,
+          transform: `translateY(${drift(f, LOGO_DRIFT, F(320))}px)`,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap }}>

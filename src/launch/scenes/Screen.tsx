@@ -1,16 +1,16 @@
 // A screen: one screen-kit screen on the stage, driven by the plan's actions (fill, count, checkRows, click, done). The
-// cursor comes in from off canvas on an arc, hesitates near the button, then presses it; the camera eases in (1.3×)
-// for the click and back out. Kinetic words land on the beat in the band the layout keeps for them.
+// cursor comes in from off canvas on an arc, hesitates near the button, then presses it; the camera eases in for the
+// click and back out (layout.ts screenPush: 1.3× on a wide canvas, as far as keeps the card whole on tall and square). Kinetic words land on the beat in the band the layout keeps for them.
 import React from 'react'
 import { Box, Camera, Center, Cursor, Words, camAt, enter, type CamKey, type Move } from '../../motion'
 import { useTheme } from '../../reel/theme'
 import { Screen, screenTarget } from '../../screens'
 import { WORD_GAP, fitRows, hudWidth, sceneOut, useLaunch } from '../context'
-import { screenBox } from '../layout'
+import { screenBox, screenPush } from '../layout'
 import { LEAD, at60, type ScreenPlan } from '../plan'
 
-/** How far the camera pushes in for the click. */
-const ZOOM = 1.3
+/** The camera's slow micro-push across the scene (a share of its scale). */
+const MICRO = 0.02
 
 export const ScreenScene: React.FC<{ p: ScreenPlan; f: number }> = ({ p, f }) => {
   const t = useTheme()
@@ -33,12 +33,12 @@ export const ScreenScene: React.FC<{ p: ScreenPlan; f: number }> = ({ p, f }) =>
     { f: F(70), x: 0, y: 0, s: 1 },
   ]
   if (p.zoom && target) {
-    // wide: lean well toward the button; narrow canvases stay nearer the middle, so less of the card is cut away
-    const lean = lay.L.wide ? 0.72 : 0.45
-    const focus = { x: target[0] * lean, y: target[1] * 0.72 }
-    keys.push({ f: p.zoom.in[0], x: 0, y: 0, s: 1 }, { f: p.zoom.in[1], ...focus, s: ZOOM }, { f: p.zoom.out[0], ...focus, s: ZOOM }, { f: p.zoom.out[1], x: 0, y: 0, s: 1 })
+    // wide: a close-up leaning toward the button; tall and square: as far as keeps the card whole, its text safe and
+    // its bottom above the kinetic words
+    const push = screenPush(lay, box, target, 1 + MICRO, words.length ? stage.bottom : Infinity)
+    keys.push({ f: p.zoom.in[0], x: 0, y: 0, s: 1 }, { f: p.zoom.in[1], ...push }, { f: p.zoom.out[0], ...push }, { f: p.zoom.out[1], x: 0, y: 0, s: 1 })
   }
-  const cam = camAt(keys, f, 0.02, len)
+  const cam = camAt(keys, f, MICRO, len)
 
   // the cursor: in from beyond the bottom-right corner, a hesitation up and left of the button, the press, and away
   let moves: Move[] | null = null
@@ -54,7 +54,7 @@ export const ScreenScene: React.FC<{ p: ScreenPlan; f: number }> = ({ p, f }) =>
     ]
   }
 
-  const inn = enter(f, -F(8), F(40), fps)
+  const inn = enter(f, p.enterAt, F(40), fps)
   const out = sceneOut(f, p.out, fps)
   const fitted = words.length ? fitRows([{ words, accent: false, at: p.wordsAt }], lay.words.maxW, lay.words.size, t.font) : null
   return (

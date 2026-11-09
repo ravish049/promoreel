@@ -6,7 +6,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { LaunchScreen, LaunchSpec } from '../reel/spec'
-import { buildLaunchPlan, logoBeats, type LogoPlan, type ScreenPlan } from './plan'
+import { EXIT, LEAD, at60, buildLaunchPlan, logoBeats, type LogoPlan, type ScreenPlan } from './plan'
 
 const screen = (over: Partial<LaunchScreen> = {}): LaunchScreen => ({
   id: 'screen',
@@ -177,5 +177,21 @@ test('a payoff too short for its clear state says how many seconds it needs, nev
     spec.scenes[2] = { ...spec.scenes[2], seconds: need } as LaunchSpec['scenes'][number]
     spec.music = { beatSync: false }
     assert.ok(!buildLaunchPlan(spec, fps).warnings.some((x) => x.includes('scene "payoff"')), `${fps} fps: ${need} s is enough`)
+  }
+})
+
+test("a screen after a hook enters on the cut, once the headline's exit has ended; after another scene, just before it", () => {
+  for (const fps of [60, 30]) {
+    const spec: LaunchSpec = { ...film(screen()), scenes: [...film(screen()).scenes.slice(0, 2), screen({ id: 'second' }), film(screen()).scenes[2]] }
+    const plan = buildLaunchPlan(spec, fps)
+    const hook = plan.scenes[0]
+    const first = plan.scenes[1] as ScreenPlan
+    const second = plan.scenes[2] as ScreenPlan
+    assert.equal(hook.kind, 'hook')
+    if (hook.kind !== 'hook') return
+    // the headline is gone by the hook's last frame: its exit ends at the cut
+    assert.ok(hook.out + at60(EXIT, fps) <= hook.scene.to - hook.scene.from, `${fps} fps: the headline has left by the cut`)
+    assert.equal(first.enterAt, 0, `${fps} fps: the screen after the hook enters on the cut`)
+    assert.ok(second.enterAt < 0 && second.enterAt >= -at60(LEAD, fps), `${fps} fps: a screen after a screen overlaps the last one's exit`)
   }
 })
