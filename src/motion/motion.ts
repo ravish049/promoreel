@@ -13,6 +13,11 @@ export const EASE = {
   count: Easing.bezier(0.5, 1, 0.89, 1),
 }
 
+/** Default frame counts in this folder are tuned for 60 fps (the walk and launch default). Scale them with `atFps`. */
+export const BASE_FPS = 60
+/** A frame count tuned for 60 fps, at `fps`. */
+export const atFps = (frames: number, fps: number) => Math.max(1, Math.round((frames * fps) / BASE_FPS))
+
 const CLAMP = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const
 
 /** from → to between frames a and b, eased (easy ease by default), held outside. */

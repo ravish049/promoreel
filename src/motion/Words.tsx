@@ -2,7 +2,7 @@
 import React from 'react'
 import { useVideoConfig } from 'remotion'
 import { useTheme } from '../reel/theme'
-import { enter } from './motion'
+import { atFps, enter } from './motion'
 
 export const Words: React.FC<{
   f: number
@@ -19,15 +19,15 @@ export const Words: React.FC<{
   weight?: number
   /** the space between words, as a share of `size` */
   gap?: number
-  /** frames each word takes to settle */
+  /** frames each word takes to settle (30 at 60 fps by default, scaled to the video's fps) */
   dur?: number
-}> = ({ f, words, at, size, color, accent, accentWords = [], weight = 800, gap = 0.26, dur = 30 }) => {
+}> = ({ f, words, at, size, color, accent, accentWords = [], weight = 800, gap = 0.26, dur }) => {
   const t = useTheme()
   const { fps } = useVideoConfig()
   return (
     <div style={{ display: 'flex', gap: size * gap, fontFamily: t.font, fontWeight: weight, fontSize: size, letterSpacing: -size * 0.025, lineHeight: 1.08 }}>
       {words.map((w, i) => {
-        const p = enter(f, at[i] ?? at[at.length - 1] ?? 0, dur, fps)
+        const p = enter(f, at[i] ?? at[at.length - 1] ?? 0, dur ?? atFps(30, fps), fps)
         return (
           <span
             key={i}

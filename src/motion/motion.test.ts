@@ -109,3 +109,8 @@ test('mixColor blends two hex colours', () => {
   assert.equal(mixColor('#102030', '#102030', 0.3), '#102030')
   assert.equal(mixColor('#000', '#fff', 2), '#ffffff')
 })
+
+test('cursorAt: a zero-length move lands on its target at once (no NaN jump)', () => {
+  const [x, y] = cursorAt(10, [{ at: 0, dur: 0, to: [0, 0] }, { at: 10, dur: 0, to: [100, 100] }])
+  assert.ok(Math.abs(x - 100) < 3 && Math.abs(y - 100) < 3, `got ${x}, ${y}`)
+})

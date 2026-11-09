@@ -44,17 +44,20 @@ export const formatsOf = (spec: VideoSpec): Format[] => (spec.formats?.length ? 
 /** A walk spec's cut names, in the order the spec lists them. */
 export const cutsOf = (spec: WalkSpec): string[] => Object.keys(spec.cuts ?? {})
 
+/** walk and launch render at 60 fps by default: their motion is tuned for it (`src/motion/`). */
+export const MOTION_FPS = 60
+
 export type ResolvedWalk = WalkInput & { fps: number; width: number; height: number }
 export type ResolvedLaunch = LaunchInput & { fps: number; width: number; height: number }
 
 /** One cut of a walk spec as the Walk composition's props (default: the first cut, the first format). */
 export function resolveWalk(spec: WalkSpec, brand: Brand, cut = cutsOf(spec)[0], format = formatsOf(spec)[0]): ResolvedWalk {
-  return { ...spec, fps: spec.fps ?? 30, ...FORMAT_SIZE[format], brand, cut, format }
+  return { ...spec, fps: spec.fps ?? MOTION_FPS, ...FORMAT_SIZE[format], brand, cut, format }
 }
 
 /** A launch spec in one format as the Launch composition's props (default: its first format). */
 export function resolveLaunch(spec: LaunchSpec, brand: Brand, format = formatsOf(spec)[0]): ResolvedLaunch {
-  return { ...spec, fps: spec.fps ?? 30, ...FORMAT_SIZE[format], brand, format }
+  return { ...spec, fps: spec.fps ?? MOTION_FPS, ...FORMAT_SIZE[format], brand, format }
 }
 
 /** A line's words for the captions: its `text`, else what it says, without the breath marks. */

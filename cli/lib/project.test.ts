@@ -84,7 +84,7 @@ test('a launch film renders one Launch video per format, each at its own size', 
     ],
   )
   const props = jobs[0].props as { format: string; width: number; height: number; fps: number; brand: Brand }
-  assert.deepEqual([props.format, props.width, props.height, props.fps, props.brand.name], ['16x9', 1920, 1080, 30, 'Acme'])
+  assert.deepEqual([props.format, props.width, props.height, props.fps, props.brand.name], ['16x9', 1920, 1080, 60, 'Acme'])
   assert.deepEqual(
     renderJobs(project(), launch({ formats: undefined })).map((j) => j.name),
     ['launch'],
@@ -155,4 +155,26 @@ test('brand.outro is required only for recorded reels', () => {
   rejects(spec, /outro \{ title, cta, lines \} is required for recorded reels/, brand)
   validateSpec(spec, 'todo-promo.json', withOutro)
   validateSpec(launch(), 'launch.json', brand)
+})
+
+test('music.bpm outside the synth range (40–240) is refused for walks and launch films', () => {
+  rejects(launch({ music: { bpm: 300 } }), /music\.bpm must be 40–240/)
+  rejects(walk({ music: { bpm: 20 } }), /music\.bpm must be 40–240/)
+})
+
+test('a recorded reel without "lines" fails with the reason, not a TypeError later', () => {
+  rejects({ id: 'r', voice: { use: 'af_heart' }, scenes: [] }, /"lines" is required/)
+})
+
+test('two reels that render to the same file are refused when the project loads', () => {
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(process.env.TMPDIR ?? '/tmp'), 'promoreel-'))
+  try {
+    fs.writeFileSync(path.join(dir, 'brand.json'), JSON.stringify(brand))
+    fs.mkdirSync(path.join(dir, 'reels'))
+    fs.writeFileSync(path.join(dir, 'reels', 'a.json'), JSON.stringify(walk({ id: 'promo' })))
+    fs.writeFileSync(path.join(dir, 'reels', 'b.json'), JSON.stringify({ id: 'promo-short', voice: { use: 'af_heart' }, lines: [], scenes: [] }))
+    assert.throws(() => loadProject(dir), /both render to out\/promo-short\.mp4/)
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
 })

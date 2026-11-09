@@ -48,6 +48,20 @@ export function loadProject(dirArg: string | undefined): Project {
         .sort()
         .map((f) => ({ id: readJson<VideoSpec>(path.join(reelsDir, f)).id, file: path.join(reelsDir, f) }))
     : []
+  const owner = new Map<string, string>()
+  for (const r of reels) {
+    let names: string[]
+    try {
+      names = outputNames(readJson<VideoSpec>(r.file))
+    } catch {
+      continue // a malformed spec fails with its own reason when it's picked
+    }
+    for (const n of names) {
+      const other = owner.get(n)
+      if (other && other !== r.file) throw new Error(`${path.basename(other)} and ${path.basename(r.file)} both render to out/${n}.mp4: rename a reel id or cut`)
+      owner.set(n, r.file)
+    }
+  }
   return { dir, name: path.basename(dir), brand, publicDir: path.join(dir, 'public'), outDir: path.join(dir, 'out'), reels }
 }
 
@@ -108,12 +122,11 @@ function checkLines(lines: LineSpec[] | undefined, where: string, fail: Fail): S
 function validateRecorded(spec: ReelSpec, where: string, fail: Fail, brand?: Brand) {
   if (!spec.voice?.use) fail('voice.use is required (e.g. "af_heart" or "chatterbox")')
   if (!Array.isArray(spec.scenes)) fail('"scenes" is required: [{ "id", "type": "hook" | "quiz" | "phone" | … }, …]')
-  const ids = new Set((spec.lines ?? []).map((l) => l.id))
+  const ids = checkLines(spec.lines, where, fail)
   for (const s of spec.scenes) {
     const ls = (s as { lines?: { id: string }[] }).lines ?? []
     for (const l of ls) if (!ids.has(l.id)) fail(`scene "${s.id}" uses line "${l.id}", which is not in "lines"`)
   }
-  for (const l of spec.lines ?? []) if (/…|\.\.\./.test(l.say)) process.stderr.write(`note: ${where} line "${l.id}" has an ellipsis; TTS often pauses oddly there. Use "|" for a breath instead.\n`)
   if (brand && !brand.outro) throw new Error('brand.json: outro { title, cta, lines } is required for recorded reels')
 }
 
@@ -167,7 +180,15 @@ function checkAnchors(anchors: Record<string, Anchor> | undefined, what: string,
   }
 }
 
+/** The synth plays 40–240 bpm (cli/audio/synth.ts). */
+export const BPM_RANGE = [40, 240] as const
+function checkMusic(music: { bpm?: number; gainDb?: number } | undefined, fail: Fail) {
+  if (music?.bpm !== undefined && !(music.bpm >= BPM_RANGE[0] && music.bpm <= BPM_RANGE[1])) fail(`music.bpm must be ${BPM_RANGE[0]}–${BPM_RANGE[1]} (got ${music.bpm})`)
+  if (music?.gainDb !== undefined && !Number.isFinite(music.gainDb)) fail('music.gainDb must be a number')
+}
+
 function validateWalk(spec: WalkSpec, where: string, fail: Fail, brand?: Brand) {
+  checkMusic(spec.music, fail)
   if (!spec.voice?.use) fail('voice.use is required (e.g. "af_heart" or "chatterbox")')
   const lineIds = checkLines(spec.lines, where, fail)
   if (!Array.isArray(spec.steps) || spec.steps.length === 0) fail('a walk needs "steps": [{ "id", "label", "icon", "screen" }, …]')
@@ -216,7 +237,7 @@ function validateWalk(spec: WalkSpec, where: string, fail: Fail, brand?: Brand) 
 function validateLaunch(spec: LaunchSpec, where: string, fail: Fail, brand?: Brand) {
   const extra = spec as { voice?: unknown; lines?: unknown }
   if (extra.voice !== undefined || extra.lines !== undefined) process.stderr.write(`note: ${where} is a launch film (music only): its "voice" and "lines" are not used.\n`)
-  if (spec.music?.bpm !== undefined && !(spec.music.bpm > 0)) fail('music.bpm must be a positive number')
+  checkMusic(spec.music, fail)
   if (!Array.isArray(spec.scenes) || spec.scenes.length === 0) fail(`a launch film needs "scenes": [{ "id", "kind": ${LAUNCH_KINDS.map((k) => `"${k}"`).join(' | ')}, "seconds" }, …]`)
   const ids = new Set<string>()
   for (const s of spec.scenes) {
@@ -273,6 +294,17 @@ export const COMPOSITION = { recorded: 'Reel', walk: 'Walk', launch: 'Launch' } 
 
 /** A video's file name under out/, without .mp4: <id>, then -<cut> (walks with several cuts), then -16x9 / -1x1. */
 export const outputName = (id: string, format: Format, cut?: string) => [id, cut, format === '9x16' ? undefined : format].filter(Boolean).join('-')
+
+/** The file names (out/<name>.mp4, also the manifest ids) a spec renders to, without resolving its props. */
+export function outputNames(spec: VideoSpec): string[] {
+  const formats = formatsOf(spec)
+  if (spec.style === 'walk') {
+    const cuts = cutsOf(spec)
+    return cuts.flatMap((cut) => formats.map((f) => outputName(spec.id, f, cuts.length > 1 ? cut : undefined)))
+  }
+  if (spec.style === 'launch') return formats.map((f) => outputName(spec.id, f))
+  return [outputName(spec.id, '9x16')]
+}
 
 /** One video to render: a spec in one format (and, for a walk, one cut), with the props its composition gets. */
 export type RenderJob = {

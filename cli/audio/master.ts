@@ -36,7 +36,7 @@ export function measureLoudness(file: string, pre = '', target = MASTER_TARGET):
 
 /** Gain to the target, then a 4× oversampled true-peak limiter at `limitDb`, so loudnorm's linear mode always fits. */
 const preChain = (gainDb: number, limitDb: number) =>
-  [`volume=${gainDb.toFixed(2)}dB`, 'aresample=192000', `alimiter=limit=${(10 ** (limitDb / 20)).toFixed(4)}:attack=0.5:release=60:level=false:latency=true`, 'aresample=48000'].join(',')
+  [`volume=${gainDb.toFixed(2)}dB`, 'aresample=192000', `alimiter=limit=${(10 ** (limitDb / 20)).toFixed(4)}:attack=0.5:release=60:level=false`, 'aresample=48000'].join(',')
 
 /**
  * Masters `input` to −15 LUFS / −1.5 dBTP, writing `out` (default: replaces `input`). Emits a "master" progress line
