@@ -5,7 +5,7 @@ import React from 'react'
 import { EASE, Odometer, mixColor, tween } from '../motion'
 import { rgba } from '../reel/theme'
 import type { StatScreen } from '../reel/spec'
-import { sec } from './look'
+import { COUNT_S, sec } from './timing'
 import { CardShell, Check, DW, GAP, PAD, ScreenHead, clip, headHeight, useClock, usePalette, type ScreenProps } from './parts'
 
 const LABEL_H = 56
@@ -14,7 +14,8 @@ const digitsOf = (s: StatScreen) => Math.max(1, String(Math.round(Math.abs(s.val
 
 /** The number's font size: 200, or smaller so the digits, prefix and suffix fit the width. */
 const numberSize = (s: StatScreen, dw: number) => {
-  const em = 0.62 * digitsOf(s) + 0.32 * ((s.prefix?.length ?? 0) + (s.suffix?.length ?? 0))
+  const minus = s.value < 0 || (s.from ?? 0) < 0 ? 0.48 : 0
+  const em = 0.62 * digitsOf(s) + 0.32 * ((s.prefix?.length ?? 0) + (s.suffix?.length ?? 0)) + minus
   return Math.min(200, Math.floor((dw - PAD * 2 - 24) / em))
 }
 
@@ -28,7 +29,7 @@ export const Stat: React.FC<ScreenProps<StatScreen>> = ({ spec, progress = {}, f
   const { f, fps } = useClock(frame)
   const { count, done } = progress
   const from = spec.from ?? 0
-  const roll = count === undefined ? 1 : tween(f, count, count + sec(1, fps), 0, 1, EASE.count)
+  const roll = count === undefined ? 1 : tween(f, count, count + sec(COUNT_S, fps), 0, 1, EASE.count)
   const value = from + (spec.value - from) * roll
   const size = numberSize(spec, dw)
   const ok = done === undefined ? 0 : tween(f, done, done + sec(0.3, fps), 0, 1, EASE.out)
@@ -40,6 +41,7 @@ export const Stat: React.FC<ScreenProps<StatScreen>> = ({ spec, progress = {}, f
       <ScreenHead spec={spec} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, minHeight: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {Math.round(value) < 0 ? <div style={{ ...affix, fontSize: size * 0.72 }}>−</div> : null}
           {spec.prefix ? <div style={affix}>{spec.prefix}</div> : null}
           <Odometer value={Math.abs(value)} digits={digitsOf(spec)} size={size} color={color} glow={rgba(p.tint, 0.22 * rolling)} />
           {spec.suffix ? <div style={affix}>{spec.suffix}</div> : null}

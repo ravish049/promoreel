@@ -126,8 +126,4 @@ export const diffText = (a: string, b: string): string | null => {
 
 // ── timing ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** Seconds → frames at fps (at least 1). */
-export const sec = (s: number, fps: number) => Math.max(1, Math.round(s * fps))
-
-/** Frames between items of a cascade of n: 0.3 s each, tightened so the whole cascade stays within ~1.8 s. */
-export const stagger = (n: number, fps: number) => sec(Math.min(0.3, 1.8 / Math.max(1, n)), fps)
+export { sec, stagger } from './timing'

@@ -5,7 +5,8 @@ import React from 'react'
 import { EASE, enter, tween } from '../motion'
 import { rgba } from '../reel/theme'
 import type { TableScreen } from '../reel/spec'
-import { countText, diffText, sec, stagger } from './look'
+import { countText, diffText } from './look'
+import { COUNT_S, TABLE_CHECK_S, scanSeconds, sec, stagger } from './timing'
 import { AppButton, BUTTON_H, CardShell, CheckDisc, ColLabel, DW, GAP, HeadBadge, PAD, Pill, ScreenHead, Spacer, clip, headHeight, useClock, usePalette, type ScreenProps } from './parts'
 
 const HEAD_ROW = 44
@@ -17,9 +18,6 @@ export const tableHeight = (s: TableScreen) => {
   const head = headHeight(s)
   return PAD * 2 + head + (head ? GAP : 0) + HEAD_ROW + s.rows.length * ROW_H + (s.summary ? SUMMARY : 0) + (s.button ? GAP + BUTTON_H : 0)
 }
-
-/** How long the scan takes to read every row, in seconds. */
-const scanSeconds = (rows: number) => 0.6 + 0.14 * rows
 
 export const Table: React.FC<ScreenProps<TableScreen>> = ({ spec, progress = {}, f: frame, width, height, flat, dw = DW }) => {
   const p = usePalette()
@@ -35,7 +33,7 @@ export const Table: React.FC<ScreenProps<TableScreen>> = ({ spec, progress = {},
     .join(' ')}${status ? ` ${STATUS_W}px` : ''}`
   const scanDur = sec(scanSeconds(rows), fps)
   const scan = fill === undefined ? 1 : tween(f, fill, fill + scanDur, 0, 1, EASE.inOut)
-  const n = count === undefined ? 1 : tween(f, count, count + sec(1, fps), 0, 1, EASE.count)
+  const n = count === undefined ? 1 : tween(f, count, count + sec(COUNT_S, fps), 0, 1, EASE.count)
   const differs = (r: string[]) => cmp !== undefined && (r[cmp.columns[0]] ?? '') !== (r[cmp.columns[1]] ?? '')
   return (
     <CardShell natural={tableHeight(spec)} width={width} height={height} dw={dw} flat={flat} sweepAt={done} f={f}>
@@ -101,7 +99,7 @@ export const Table: React.FC<ScreenProps<TableScreen>> = ({ spec, progress = {},
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   {off ? (
                     ck !== undefined && f >= ck ? (
-                      <div style={{ transform: `scale(${enter(f, ck, sec(0.7, fps), fps)})`, transformOrigin: 'right center' }}>
+                      <div style={{ transform: `scale(${enter(f, ck, sec(TABLE_CHECK_S, fps), fps)})`, transformOrigin: 'right center' }}>
                         <Pill tone={p.diff} size={24} dot>
                           {cmp?.diffLabel ?? diffText(r[cmp!.columns[0]] ?? '', r[cmp!.columns[1]] ?? '') ?? '≠'}
                         </Pill>

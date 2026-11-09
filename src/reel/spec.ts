@@ -491,8 +491,8 @@ export type WalkSpec = SpecBase & {
   cuts: Record<string, WalkCut>
   /** The visual hook: the logo and a headline over the lit chain of steps. */
   hook?: { headline: string; sub?: string }
-  /** The close's copy (each falls back to brand.outro). */
-  close?: { title?: string; tagline?: [string, string]; cta?: string }
+  /** The close's copy (each falls back to brand.outro). The tagline's second part (drawn in the accent colour) is optional. */
+  close?: { title?: string; tagline?: [string, string?]; cta?: string }
   /** Default pacing, ms: before a scene's first line, between its lines, after its last line, the hold after the close. */
   pace?: { leadMs?: number; gapMs?: number; tailMs?: number; minMs?: number; endHoldMs?: number }
 }

@@ -1,0 +1,378 @@
+{
+  "id": "walk",
+  "style": "walk",
+  "title": "Brindlebook feature walk",
+  "voice": {
+    "use": "af_heart",
+    "speed": 1
+  },
+  "music": {
+    "beatSync": true
+  },
+  "hook": {
+    "headline": "Your grooming week, booked",
+    "sub": "from booking to invoice"
+  },
+  "lines": [
+    {
+      "id": "hook",
+      "say": "Could your grooming salon | book itself?",
+      "text": "Could your grooming salon book itself?"
+    },
+    {
+      "id": "bookings",
+      "say": "Every appointment lands in one list, | and Brindle Book confirms it for you.",
+      "text": "Every appointment lands in one list, and Brindlebook confirms it for you."
+    },
+    {
+      "id": "checkin",
+      "say": "Owners check in from their phone | when they pull up.",
+      "text": "Owners check in from their phone when they pull up."
+    },
+    {
+      "id": "week",
+      "say": "By Friday, | your week is full, | with no phone tag.",
+      "text": "By Friday, your week is full, with no phone tag."
+    },
+    {
+      "id": "invoice",
+      "say": "Then the invoice fills itself in, | ready to send.",
+      "text": "Then the invoice fills itself in, ready to send."
+    },
+    {
+      "id": "close",
+      "say": "Brindle Book. | Book the groom, | skip the calls.",
+      "text": "Brindlebook. Book the groom, skip the calls."
+    },
+    {
+      "id": "cta",
+      "say": "Try it free, | at Brindle Book, | dot example.",
+      "text": "Try it free at brindlebook.example"
+    },
+    {
+      "id": "open-s",
+      "say": "Meet Brindle Book, | bookings for dog groomers.",
+      "text": "Meet Brindlebook, bookings for dog groomers."
+    },
+    {
+      "id": "bookings-s",
+      "say": "Every booking lands in one list, | already confirmed.",
+      "text": "Every booking lands in one list, already confirmed."
+    },
+    {
+      "id": "invoice-s",
+      "say": "And invoices fill themselves in, | ready to send.",
+      "text": "And invoices fill themselves in, ready to send."
+    }
+  ],
+  "steps": [
+    {
+      "id": "bookings",
+      "label": "Bookings",
+      "icon": "clock",
+      "screen": {
+        "kind": "list",
+        "title": "Today's grooms",
+        "subtitle": "Thursday · 4 appointments",
+        "icon": "clock",
+        "badge": "4 new",
+        "rows": [
+          {
+            "initials": "BI",
+            "title": "Biscuit · Cockapoo",
+            "subtitle": "09:00 · Full groom",
+            "value": "$65.00",
+            "tag": "New",
+            "tagTone": "accent"
+          },
+          {
+            "initials": "MO",
+            "title": "Moose · Bernese",
+            "subtitle": "10:30 · Bath and brush",
+            "value": "$48.00"
+          },
+          {
+            "initials": "PE",
+            "title": "Pepper · Schnauzer",
+            "subtitle": "12:00 · Hand strip",
+            "value": "$72.00",
+            "tag": "Regular",
+            "tagTone": "highlight"
+          },
+          {
+            "initials": "JU",
+            "title": "Juno · Shih Tzu",
+            "subtitle": "14:15 · Puppy trim",
+            "value": "$40.00"
+          }
+        ],
+        "button": {
+          "label": "Confirm all",
+          "busy": "Confirming…",
+          "done": "All confirmed"
+        }
+      },
+      "anchors": {
+        "checkRows": {
+          "word": "list"
+        },
+        "click": {
+          "word": "confirms"
+        },
+        "done": {
+          "word": "you"
+        }
+      }
+    },
+    {
+      "id": "checkin",
+      "label": "Check-in",
+      "icon": "smartphone",
+      "screen": {
+        "kind": "phone",
+        "statusBarTime": "8:56",
+        "screen": {
+          "kind": "list",
+          "title": "Biscuit's visit",
+          "subtitle": "Thursday, 09:00",
+          "rows": [
+            {
+              "icon": "clock",
+              "title": "Full groom",
+              "subtitle": "About 2 hours"
+            },
+            {
+              "icon": "map-pin",
+              "title": "Brindle & Co. Salon",
+              "subtitle": "14 Elm Row"
+            },
+            {
+              "icon": "user-plus",
+              "title": "Sam Ortiz",
+              "subtitle": "Your groomer today"
+            }
+          ]
+        },
+        "action": {
+          "label": "I'm here",
+          "icon": "map-pin",
+          "done": "Checked in"
+        },
+        "tabs": [
+          {
+            "label": "Visits",
+            "icon": "clock"
+          },
+          {
+            "label": "Messages",
+            "icon": "message-square"
+          },
+          {
+            "label": "Pay",
+            "icon": "banknote"
+          }
+        ]
+      },
+      "anchors": {
+        "click": {
+          "word": "phone"
+        },
+        "done": {
+          "word": "up"
+        }
+      }
+    },
+    {
+      "id": "week",
+      "label": "Your week",
+      "icon": "line-chart",
+      "screen": {
+        "kind": "stat",
+        "title": "This week",
+        "subtitle": "Mon – Sat · 2 groomers",
+        "icon": "line-chart",
+        "value": 46,
+        "from": 12,
+        "label": "grooms booked online"
+      },
+      "anchors": {
+        "count": {
+          "word": "week"
+        },
+        "done": {
+          "word": "tag"
+        }
+      }
+    },
+    {
+      "id": "invoice",
+      "label": "Invoice",
+      "icon": "file-text",
+      "screen": {
+        "kind": "form",
+        "title": "New invoice",
+        "subtitle": "Filled in from Biscuit's visit",
+        "icon": "file-text",
+        "badge": "Draft",
+        "fields": [
+          {
+            "label": "Owner",
+            "value": "Maya Chen"
+          },
+          {
+            "label": "Visit",
+            "value": "Thu · Full groom with Sam"
+          }
+        ],
+        "items": [
+          {
+            "label": "Full groom",
+            "detail": "Cockapoo, medium",
+            "amount": "$65.00"
+          },
+          {
+            "label": "Nail trim",
+            "detail": "Add-on",
+            "amount": "$12.00"
+          }
+        ],
+        "total": {
+          "label": "Total",
+          "value": "$77.00"
+        },
+        "button": {
+          "label": "Send invoice",
+          "busy": "Sending…",
+          "done": "Sent"
+        }
+      },
+      "anchors": {
+        "count": {
+          "word": "fills"
+        },
+        "click": {
+          "word": "ready"
+        },
+        "done": {
+          "word": "send",
+          "offsetMs": 250
+        }
+      }
+    }
+  ],
+  "cuts": {
+    "long": {
+      "hook": {
+        "lines": [
+          "hook"
+        ],
+        "minMs": 3000
+      },
+      "steps": [
+        {
+          "step": "bookings",
+          "lines": [
+            "bookings"
+          ]
+        },
+        {
+          "step": "checkin",
+          "lines": [
+            "checkin"
+          ]
+        },
+        {
+          "step": "week",
+          "lines": [
+            "week"
+          ],
+          "minMs": 3000
+        },
+        {
+          "step": "invoice",
+          "lines": [
+            "invoice"
+          ],
+          "minMs": 3600
+        }
+      ],
+      "logo": {
+        "lines": [
+          "close",
+          "cta"
+        ],
+        "minMs": 4600,
+        "anchors": {
+          "name": {
+            "line": "close",
+            "word": "Brindlebook"
+          },
+          "tagline": {
+            "line": "close",
+            "word": "Book"
+          },
+          "cta": {
+            "line": "cta"
+          }
+        }
+      }
+    },
+    "short": {
+      "tracker": "title",
+      "hook": {
+        "lines": [
+          "open-s"
+        ],
+        "minMs": 2600
+      },
+      "steps": [
+        {
+          "step": "bookings",
+          "lines": [
+            "bookings-s"
+          ],
+          "anchors": {
+            "checkRows": {
+              "word": "list"
+            },
+            "click": {
+              "word": "already"
+            },
+            "done": {
+              "word": "confirmed",
+              "offsetMs": 300
+            }
+          }
+        },
+        {
+          "step": "invoice",
+          "lines": [
+            "invoice-s"
+          ],
+          "minMs": 3200,
+          "anchors": {
+            "count": {
+              "word": "fill"
+            },
+            "click": {
+              "word": "ready"
+            },
+            "done": {
+              "word": "send",
+              "offsetMs": 250
+            }
+          }
+        }
+      ],
+      "logo": {
+        "lines": [
+          "cta"
+        ],
+        "minMs": 3200
+      }
+    }
+  },
+  "pace": {
+    "tailMs": 650
+  }
+}

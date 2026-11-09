@@ -5,7 +5,8 @@ import React from 'react'
 import { EASE, enter, tween } from '../motion'
 import { rgba } from '../reel/theme'
 import type { FormScreen } from '../reel/spec'
-import { countText, sec, stagger, typed } from './look'
+import { countText, typed } from './look'
+import { COUNT_S, FIELD_STEP_S, ITEM_IN_S, TYPE_S, sec, stagger } from './timing'
 import { AppButton, BUTTON_H, CardShell, Check, ColLabel, DW, GAP, HeadBadge, PAD, ScreenHead, Spacer, clip, headHeight, useClock, usePalette, type ScreenProps } from './parts'
 
 const FIELD_H = 118
@@ -13,8 +14,6 @@ const WELL_H = 70
 const ITEM_H = 92
 const ITEM_GAP = 12
 const TOTAL_H = 96
-/** Seconds between one field starting to type and the next. */
-const FIELD_STEP = 0.55
 
 export const formHeight = (s: FormScreen) => {
   const head = headHeight(s)
@@ -36,11 +35,11 @@ export const Form: React.FC<ScreenProps<FormScreen>> = ({ spec, progress = {}, f
   const { fill, count, click, done } = progress
   const fields = spec.fields ?? []
   const items = spec.items ?? []
-  const fst = sec(FIELD_STEP, fps)
-  const typeDur = sec(0.45, fps)
+  const fst = sec(FIELD_STEP_S, fps)
+  const typeDur = sec(TYPE_S, fps)
   const ist = stagger(items.length, fps)
   const itemsAt = fill === undefined ? undefined : fill + fields.length * fst
-  const n = count === undefined ? 1 : tween(f, count, count + sec(1, fps), 0, 1, EASE.count)
+  const n = count === undefined ? 1 : tween(f, count, count + sec(COUNT_S, fps), 0, 1, EASE.count)
   return (
     <CardShell natural={formHeight(spec)} width={width} height={height} dw={dw} flat={flat} sweepAt={done} f={f}>
       <ScreenHead spec={spec} right={<HeadBadge spec={spec} button={spec.button} f={f} done={done} />} />
@@ -79,7 +78,7 @@ export const Form: React.FC<ScreenProps<FormScreen>> = ({ spec, progress = {}, f
       {items.length ? <div style={{ height: 6, flexShrink: 0 }} /> : null}
       {items.map((it, i) => {
         const at = itemsAt === undefined ? undefined : itemsAt + i * ist
-        const inP = at === undefined ? 1 : enter(f, at, sec(0.85, fps), fps)
+        const inP = at === undefined ? 1 : enter(f, at, sec(ITEM_IN_S, fps), fps)
         const tick = at === undefined ? 1 : tween(f, at + sec(0.13, fps), at + sec(0.5, fps), 0, 1, EASE.out)
         return (
           <div
