@@ -8,8 +8,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { bundle } from '@remotion/bundler'
 import { renderMedia, selectComposition } from '@remotion/renderer'
-import type { Style, VideoSpec } from '../../src/reel/spec'
-import { KIT, ensurePublic, loadProject, pickReel, rel, renderJobs, type Project, type RenderJob } from '../lib/project'
+import type { Style, VideoSpec, WalkSpec } from '../../src/reel/spec'
+import { voiceDir, type ResolvedWalk } from '../../src/reel/shared'
+import { buildWalkTimeline, type WalkWords } from '../../src/walk/timeline'
+import { walkAudioJob } from '../../src/walk/audio'
+import { writeBed } from '../audio/synth'
+import { masterMp4 } from '../audio/master'
+import { KIT, ensurePublic, loadProject, pickReel, readJson, rel, renderJobs, type Project, type RenderJob } from '../lib/project'
 import { step } from '../lib/progress'
 import { upsertVideo, type VideoEntry } from '../lib/manifest'
 import { probeDuration, probeSize } from '../lib/sh'
@@ -20,14 +25,39 @@ export type RenderContext = { project: Project; spec: VideoSpec; job: RenderJob;
 export type RenderHook = (ctx: RenderContext) => void | Promise<void>
 
 /**
- * Per-style steps around each video: `beforeRender` runs before Remotion renders it (e.g. write the audio its
- * composition plays), `afterRender` once the mp4 is written and before the sheet and manifest (e.g. master its sound in
- * place). They run in order.
+ * Per-style steps around each video: `beforeRender` runs before the template is bundled (the bundle takes a copy of
+ * public/, so whatever a hook writes there, e.g. the audio a composition plays, must exist by then); `afterRender` once
+ * the mp4 is written and before the sheet and manifest (e.g. master its sound in place). They run in order.
  */
 export const RENDER_HOOKS: Record<Style, { beforeRender: RenderHook[]; afterRender: RenderHook[] }> = {
   recorded: { beforeRender: [], afterRender: [] },
-  walk: { beforeRender: [], afterRender: [] },
+  walk: { beforeRender: [writeWalkBed], afterRender: [masterInPlace] },
   launch: { beforeRender: [], afterRender: [] },
+}
+
+/**
+ * A walk cut's music bed and sound effects, laid out on the same timeline the composition builds (the measured voice,
+ * at the video's fps): public/audio/<video name>.wav.
+ */
+async function writeWalkBed({ project: p, job, step: st }: RenderContext) {
+  const spec = job.props as ResolvedWalk
+  const dir = path.join(p.publicDir, voiceDir(spec.id, spec.voice.use))
+  const linesFile = path.join(dir, 'lines.json')
+  if (!fs.existsSync(linesFile)) throw new Error(`no voice-over for ${spec.voice.use}: run promoreel voice ${p.dir}`)
+  const lines = readJson<{ lines: Record<string, { durationMs: number }> }>(linesFile).lines
+  const capsFile = path.join(dir, 'captions.json')
+  const words = fs.existsSync(capsFile) ? readJson<WalkWords>(capsFile) : undefined
+  const durations = Object.fromEntries(Object.entries(lines).map(([k, v]) => [k, v.durationMs]))
+  const tl = buildWalkTimeline(spec as WalkSpec, job.cut!, durations, words)
+  const audio = walkAudioJob(spec as WalkSpec, tl, { resolveMusic: (src) => path.resolve(p.publicDir, src) })
+  const out = path.join(p.publicDir, 'audio', `${job.name}.wav`)
+  const bed = writeBed(audio, out)
+  st.log(`${job.name}: ${bed.source === 'track' ? 'music track' : `music bed at ${audio.bpm} bpm`}, ${audio.sfx.length} sound effects, ${audio.voiceSpans.length} voice spans → ${rel(p, out)}`)
+}
+
+/** Masters the rendered mp4's sound in place (−15 LUFS, true peak ≤ −1.5 dBTP). */
+function masterInPlace({ out }: RenderContext) {
+  masterMp4(out)
 }
 
 /** The props Remotion gets, written to out/.props-<id>.json (Studio reads the same file): the spec's first video. */
@@ -48,7 +78,14 @@ export async function render(projectDir: string, opts: { reel?: string; crf?: nu
   const { p, spec, file, jobs } = writeProps(projectDir, opts.reel)
   if (opts.out && jobs.length > 1) throw new Error(`--out names one file, and ${spec.id} makes ${jobs.length} videos (${jobs.map((j) => `${j.name}.mp4`).join(', ')})`)
   const hooks = RENDER_HOOKS[jobs[0].style]
-  st.start(`${spec.id}: bundling the template`)
+  st.start(`${spec.id}: ${jobs.length} video(s)`)
+  const contexts: RenderContext[] = jobs.map((job) => {
+    const out = opts.out ? path.resolve(opts.out) : path.join(p.outDir, `${job.name}.mp4`)
+    fs.mkdirSync(path.dirname(out), { recursive: true })
+    return { project: p, spec, job, out, step: st }
+  })
+  for (const ctx of contexts) for (const h of hooks.beforeRender) await h(ctx)
+  st.progress(0, `${spec.id}: bundling the template`)
   let lastPct = -1
   const serveUrl = await bundle({
     entryPoint: path.join(KIT, 'src', 'index.ts'),
@@ -67,10 +104,8 @@ export async function render(projectDir: string, opts: { reel?: string; crf?: nu
     const base = 10 + i * share
     const pct = (x: number) => base + (x / 90) * share
     const label = jobs.length > 1 ? job.name : spec.id
-    const out = opts.out ? path.resolve(opts.out) : path.join(p.outDir, `${job.name}.mp4`)
-    fs.mkdirSync(path.dirname(out), { recursive: true })
-    const ctx: RenderContext = { project: p, spec, job, out, step: st }
-    for (const h of hooks.beforeRender) await h(ctx)
+    const ctx = contexts[i]
+    const out = ctx.out
     const inputProps = job.props as unknown as Record<string, unknown>
     const composition = await selectComposition({ serveUrl, id: job.composition, inputProps, logLevel: 'error' })
     const seconds = composition.durationInFrames / composition.fps

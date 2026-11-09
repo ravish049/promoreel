@@ -476,7 +476,7 @@ export type WalkCut = {
   logo: WalkSceneTiming & { anchors?: Record<string, Anchor> }
   /** The tracker pill: "Step 2 of 5 · GPS clock-in" (numbered, default) or just the label. */
   tracker?: 'numbered' | 'title'
-  /** Hide the captions during these scenes ("hook", step ids, "logo"). */
+  /** Hide the captions during these scenes ("hook", step ids, "logo"). Default: the hook and the logo, whose own type is on screen. */
   hideCaptionsIn?: string[]
 }
 
