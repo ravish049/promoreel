@@ -111,6 +111,17 @@ export const counterIn = (c: CounterTrack | undefined, s: LaunchTLScene) => !!c 
 export const counterValue = (c: CounterTrack, g: number) => counterAt(c, g, EASE.count)
 
 /** The exit every scene shares: 0 → 1 (ease-in) over its last frames, from the plan's `out`. */
+/**
+ * The stage's deepest shade, for shadows on it and its vignette: the theme's ink (the stage's background) at a third of
+ * its brightness, so a shadow stays in the brand's hue instead of a fixed black.
+ */
+export const deepInk = (t: Theme) => {
+  let h = t.ink.replace('#', '')
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('')
+  const n = parseInt(h.slice(0, 6), 16)
+  return `#${[(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v / 3).toString(16).padStart(2, '0')).join('')}`
+}
+
 export const sceneOut = (f: number, out: number, fps: number) => tween(f, out, out + at60(EXIT, fps), 0, 1, EASE.in)
 
 export type { Rect }

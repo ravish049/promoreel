@@ -142,6 +142,24 @@ test('a launch film without scenes fails with the reason', () => {
   rejects(launch({ scenes: [{ id: 'l', kind: 'logo', seconds: 3 }] }), /scene "l" needs a call to action/, brand)
 })
 
+test('a launch screen or payoff under 1 s fails; under 1.5 s passes with a note; a one-part tagline passes', () => {
+  const base = launch()
+  const withSeconds = (i: number, seconds: number) => ({ ...base, scenes: base.scenes.map((s, j) => (j === i ? { ...s, seconds } : s)) })
+  rejects(withSeconds(1, 0.8), /scene "product": a screen scene needs at least 1 second/)
+  rejects(withSeconds(2, 0.5), /scene "payoff": a payoff scene needs at least 1 second/)
+  const notes: string[] = []
+  const write = process.stderr.write
+  process.stderr.write = ((m: string) => (notes.push(m), true)) as typeof process.stderr.write
+  try {
+    validateSpec(withSeconds(1, 1.2), 'launch.json', brand)
+    validateSpec(withSeconds(1, 3), 'launch.json', brand)
+  } finally {
+    process.stderr.write = write
+  }
+  assert.equal(notes.filter((n) => /scene "product" runs 1\.2 s; a screen scene reads better with 1\.5 s or more/.test(n)).length, 1)
+  validateSpec(launch({ scenes: [...base.scenes.slice(0, 3), { id: 'logo', kind: 'logo', seconds: 5, cta: 'acme.dev', tagline: ['Every sheet, matched.'] }] }), 'launch.json', brand)
+})
+
 test('formats: only launch films go landscape or square; unknown formats are refused', () => {
   rejects(walk({ formats: ['16x9'] }), /a walk reel renders in 9x16 only/)
   rejects({ ...pickReel(loadProject(generic), 'todo-promo').spec, formats: ['1x1'] }, /a recorded reel renders in 9x16 only/)

@@ -10,7 +10,7 @@ import { Icon } from '../../reel/icons'
 import { rgba, useTheme } from '../../reel/theme'
 import { Check, CheckDisc, Spinner, usePalette } from '../../screens'
 import type { LaunchPayoff } from '../../reel/spec'
-import { WORD_GAP, fitRows, hudWidth, sceneOut, useLaunch } from '../context'
+import { WORD_GAP, deepInk, fitRows, hudWidth, sceneOut, useLaunch } from '../context'
 import { rectCx, rectCy, rectH, rectW } from '../layout'
 import { LEAD, at60, type PayoffPlan } from '../plan'
 
@@ -129,6 +129,8 @@ export const PayoffScene: React.FC<{ p: PayoffPlan; f: number }> = ({ p, f }) =>
 /** One card: an icon tile, the title, the done line once checked, its lines ticking in as the bar fills, a check disc. */
 const PayoffCard: React.FC<{ card: Card; f: number; landed: number; check: number; u: number; lines: number; status: boolean }> = ({ card, f, landed, check, u, lines, status }) => {
   const p = usePalette()
+  // a shadow on the dark stage: its own deepest shade (the palette's shadow is tuned for a light page)
+  const deep = deepInk(useTheme())
   const { plan } = useLaunch()
   const fps = plan.fps
   const F = (n: number) => at60(n, fps)
@@ -148,7 +150,7 @@ const PayoffCard: React.FC<{ card: Card; f: number; landed: number; check: numbe
         padding: PAD,
         borderRadius: 28,
         background: p.card,
-        boxShadow: `0 24px 60px ${rgba('#000000', 0.32)}, 0 4px 14px ${rgba('#000000', 0.18)}, inset 0 0 0 ${2 * okMix}px ${rgba(p.success, 0.55)}`,
+        boxShadow: `0 24px 60px ${rgba(deep, 0.32)}, 0 4px 14px ${rgba(deep, 0.18)}, inset 0 0 0 ${2 * okMix}px ${rgba(p.success, 0.55)}`,
         fontFamily: p.font,
         color: p.label,
         display: 'flex',
@@ -235,6 +237,8 @@ const PayoffCard: React.FC<{ card: Card; f: number; landed: number; check: numbe
 /** One row card: an icon tile, the title, a status line (the line being worked on, then the done line), the bar, a check disc. */
 const RowCard: React.FC<{ card: Card; f: number; landed: number; check: number; u: number; sub: boolean }> = ({ card, f, landed, check, u, sub: hasSub }) => {
   const p = usePalette()
+  // a shadow on the dark stage: its own deepest shade (the palette's shadow is tuned for a light page)
+  const deep = deepInk(useTheme())
   const { plan } = useLaunch()
   const fps = plan.fps
   const F = (n: number) => at60(n, fps)
@@ -257,7 +261,7 @@ const RowCard: React.FC<{ card: Card; f: number; landed: number; check: number; 
         padding: RPAD,
         borderRadius: 30,
         background: p.card,
-        boxShadow: `0 24px 60px ${rgba('#000000', 0.32)}, 0 4px 14px ${rgba('#000000', 0.18)}, inset 0 0 0 ${2 * okMix}px ${rgba(p.success, 0.55)}`,
+        boxShadow: `0 24px 60px ${rgba(deep, 0.32)}, 0 4px 14px ${rgba(deep, 0.18)}, inset 0 0 0 ${2 * okMix}px ${rgba(p.success, 0.55)}`,
         fontFamily: p.font,
         color: p.label,
         display: 'flex',

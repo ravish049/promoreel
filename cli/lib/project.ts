@@ -247,6 +247,11 @@ function validateLaunch(spec: LaunchSpec, where: string, fail: Fail, brand?: Bra
     const what = `scene "${s.id}"`
     if (!LAUNCH_KINDS.includes(s.kind)) fail(`${what}: kind "${s.kind}" is not one of ${list(LAUNCH_KINDS)}`)
     if (typeof s.seconds !== 'number' || !(s.seconds > 0)) fail(`${what} needs "seconds" (how long it runs, > 0)`)
+    // a screen or payoff needs time for its cursor, press and done state (or its cards and checkmarks) to read
+    if (s.kind === 'screen' || s.kind === 'payoff') {
+      if (s.seconds < 1) fail(`${what}: a ${s.kind} scene needs at least 1 second (it has ${s.seconds}); 1.5 or more reads well`)
+      if (s.seconds < 1.5) process.stderr.write(`note: ${where} ${what} runs ${s.seconds} s; a ${s.kind} scene reads better with 1.5 s or more.\n`)
+    }
     switch (s.kind) {
       case 'hook':
         if (!Array.isArray(s.headline) || s.headline.length === 0 || s.headline.some((h) => !h?.text)) fail(`${what}: a hook needs "headline": [{ "text" }, …]`)

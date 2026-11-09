@@ -127,6 +127,17 @@ export type CounterTrack = {
   hide?: [number, number]
 }
 
+/**
+ * When the counter moves from the hook's centre stage to its corner (global frames): it arrives before the next scene is
+ * mounted (LEAD before the cut), so it never crosses that scene's card as the card enters. It starts once the counter has
+ * rolled up when the hook allows, and takes at least 20 frames (60 fps).
+ */
+const toCornerSpan = (hook: HookPlan, F: (n: number) => number): [number, number] => {
+  const end = hook.scene.to - F(LEAD)
+  const rolled = hook.countUp ? hook.scene.from + hook.countUp[1] : hook.scene.from
+  return [Math.min(Math.max(rolled, end - F(36)), end - F(20)), end]
+}
+
 export type LaunchPlan = {
   fps: number
   tl: LaunchTimeline
@@ -145,12 +156,16 @@ const compares = (s: ScreenSpec): boolean => (s.kind === 'phone' ? compares(s.sc
 /** Whether the screen has a button (or a phone action) the cursor can press. */
 export const pressable = (s: ScreenSpec): boolean => (s.kind === 'phone' ? !!s.action || pressable(s.screen) : s.kind !== 'stat' && !!s.button)
 
-const clampF = (f: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, f))
+/** f within [lo, hi]; when the range is empty (hi < lo) the upper bound wins, so nothing is placed past it. */
+const clampF = (f: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, f))
+
+/** Where a scene starts its exit: EXIT frames before its end, or half-way through a scene shorter than two exits. */
+const outOf = (len: number, fps: number) => Math.max(Math.round(len / 2), len - at60(EXIT, fps))
 
 function hookPlan(scene: LaunchTLScene, s: LaunchHook, fps: number, withCounter: boolean): HookPlan {
   const F = (n: number) => at60(n, fps)
   const len = scene.to - scene.from
-  const out = len - F(EXIT)
+  const out = outOf(len, fps)
   const countUp: [number, number] | undefined = withCounter ? [F(30), F(30) + fps] : undefined
   // the first row starts as the counter is mid-roll; each row after a short breath
   const start = withCounter ? F(56) : F(14)
@@ -179,17 +194,26 @@ function screenPlan(scene: LaunchTLScene, s: LaunchScreen, fps: number, beat: nu
   const sec = (x: number) => Math.round(x * fps)
   const len = scene.to - scene.from
   const S = len / fps
-  const out = len - F(EXIT)
-  const last = out - F(6)
+  const out = outOf(len, fps)
+  // every action lands by `last`, so it is seen before the scene leaves
+  const last = Math.max(0, out - F(6))
   const p: Progress = {}
   for (const [k, v] of Object.entries(s.at ?? {}) as [ScreenAction, number][]) if (typeof v === 'number') p[k] = clampF(sec(v), 0, last)
   const sc = s.screen
-  if (p.fill === undefined && hasRows(sc)) p.fill = F(14)
-  if (p.count === undefined && counts(sc)) p.count = (p.fill ?? F(10)) + sec(0.5)
-  if (p.checkRows === undefined && compares(sc)) p.checkRows = (p.fill ?? 0) + sec(1.2)
+  if (p.fill === undefined && hasRows(sc)) p.fill = Math.min(last, F(14))
+  if (p.count === undefined && counts(sc)) p.count = Math.min(last, (p.fill ?? F(10)) + sec(0.5))
+  if (p.checkRows === undefined && compares(sc)) p.checkRows = Math.min(last, (p.fill ?? 0) + sec(1.2))
   const canPress = pressable(sc)
-  if (canPress && p.click === undefined) p.click = clampF(sec(Math.max(2.4, Math.min(S * 0.5, S - 2.2))), sec(1), last - sec(0.8))
-  if (p.done === undefined) p.done = p.click !== undefined ? Math.min(last, p.click + sec(0.6)) : clampF(sec(S * 0.66), 0, last)
+  if (canPress && p.click === undefined) {
+    // at least 1 s in and 0.8 s before `last`; a scene too short for both presses a little past its middle
+    const lo = Math.min(sec(1), Math.round(last * 0.55))
+    p.click = clampF(sec(Math.max(2.4, Math.min(S * 0.5, S - 2.2))), lo, Math.max(lo, last - sec(0.8)))
+  }
+  if (p.done === undefined) p.done = p.click !== undefined ? Math.max(p.click, Math.min(last, p.click + sec(0.6))) : clampF(sec(S * 0.66), 0, last)
+  else if (p.click !== undefined && p.done < p.click) {
+    warn(`scene "${scene.id}": at.done (${(p.done / fps).toFixed(2)} s) is before the click (${(p.click / fps).toFixed(2)} s); it is moved to the click`)
+    p.done = p.click
+  }
 
   let cursor: ScreenPlan['cursor']
   let zoom: ScreenPlan['zoom']
@@ -197,30 +221,42 @@ function screenPlan(scene: LaunchTLScene, s: LaunchScreen, fps: number, beat: nu
     const c = p.click
     // offsets before the click (s): enter from off canvas, hesitate near the button, then press it
     const want = { enter: 1.95, enterDur: 1.0, approach: 0.55, approachDur: 0.45 }
-    const room = Math.max(0.4, c / fps - 0.25)
+    const before = c / fps
+    const room = Math.max(Math.min(0.4, before), before - 0.25)
     const k = Math.min(1, room / want.enter)
-    if (k < 1) warn(`scene "${scene.id}": the click at ${(c / fps).toFixed(2)} s leaves the cursor too little time to travel in; it moves faster`)
-    const enter: [number, number] = [c - sec(want.enter * k), sec(want.enterDur * k)]
-    const approach: [number, number] = [c - sec(want.approach * k), Math.max(1, sec(want.approachDur * k))]
+    if (k < 1) warn(`scene "${scene.id}": the click at ${before.toFixed(2)} s leaves the cursor too little time to travel in; it moves faster`)
+    // never before the scene's first frame, and on the button by the press
+    const enter: [number, number] = [Math.max(0, c - sec(want.enter * k)), Math.max(1, sec(want.enterDur * k))]
+    const approachAt = Math.max(enter[0], c - sec(want.approach * k))
+    const approach: [number, number] = [approachAt, Math.max(1, Math.min(sec(want.approachDur * k), c - approachAt))]
     const leaveAt = Math.max(c, p.done ?? c) + sec(0.55)
     const leave: [number, number] | undefined = leaveAt + sec(0.8) <= out ? [leaveAt, sec(0.8)] : undefined
     cursor = { enter, approach, click: c, leave }
-    const zin: [number, number] = [Math.max(F(20), c - sec(0.95)), Math.max(F(21), c - sec(0.12))]
+    // the push-in finishes just before the press; skipped when the click comes too early for it to read as a push
+    const zin: [number, number] = [Math.max(F(20), c - sec(0.95)), c - sec(0.12)]
     const holdTo = Math.max(c + sec(0.6), (p.done ?? c) + sec(0.35))
     const zout: [number, number] = [Math.min(holdTo, out - F(30)), Math.min(holdTo + sec(0.75), out)]
-    if (zout[0] > zin[1]) zoom = { in: zin, out: zout }
+    if (zin[1] - zin[0] >= sec(0.3) && zout[0] >= c && zout[0] > zin[1]) zoom = { in: zin, out: zout }
   }
-  // kinetic words: on the beat, spread over the first half of the scene
+  // kinetic words: on the beat, spread over the first half of the scene; squeezed (off the beat) when the last would
+  // land too late to be read before the scene leaves
   const n = s.words?.length ?? 0
   const step = n ? Math.max(1, Math.floor((S * 0.5 * fps) / beat / n)) : 1
-  const wordsAt = Array.from({ length: n }, (_, i) => Math.round(beat * (1 + i * step)))
+  let wordsAt = Array.from({ length: n }, (_, i) => Math.round(beat * (1 + i * step)))
+  const wordsBy = Math.max(0, out - sec(0.6))
+  if (n && wordsAt[n - 1] > wordsBy) {
+    const first = Math.min(Math.round(beat), Math.round(wordsBy * 0.25))
+    const gap = n > 1 ? (wordsBy - first) / (n - 1) : 0
+    wordsAt = Array.from({ length: n }, (_, i) => Math.round(first + i * gap))
+    if (n > 1 && gap < F(8)) warn(`scene "${scene.id}": ${n} words in ${S.toFixed(2)} s land ${(gap / fps).toFixed(2)} s apart, too fast to read; give the scene more seconds or use fewer words`)
+  }
   return { kind: 'screen', scene, spec: s, progress: p, cursor, zoom, wordsAt, out }
 }
 
 function payoffPlan(scene: LaunchTLScene, s: LaunchPayoff, fps: number, withCounter: boolean, warn: (m: string) => void): PayoffPlan {
   const F = (n: number) => at60(n, fps)
   const len = scene.to - scene.from
-  const out = len - F(EXIT)
+  const out = outOf(len, fps)
   const n = s.cards.length
   // the first card is already falling in as the cut lands
   const land = s.cards.map((_, i) => i * F(12) - F(4))
@@ -291,7 +327,7 @@ export function buildLaunchPlan(spec: LaunchSpec, fps = spec.fps ?? MOTION_FPS):
         digits: String(Math.max(1, Math.round(Math.abs(counter.value)))).length,
         show,
         rollUp: hook?.countUp ? [hook.scene.from + hook.countUp[0], hook.scene.from + hook.countUp[1]] : undefined,
-        toCorner: hook && nextAfterHook ? [hook.scene.to - F(20), hook.scene.to + F(22)] : undefined,
+        toCorner: hook && nextAfterHook ? toCornerSpan(hook, F) : undefined,
         drops: payoffs.filter((p) => p.countDown).map((p) => ({ span: [p.scene.from + p.countDown![0], p.scene.from + p.countDown![1]] as [number, number], to: p.spec.counterTo ?? 0 })),
         // the counter stays through the payoff's hold and leaves with its scene (unless it is the film's last scene)
         hide: hideStart !== undefined && lastWithCounter!.scene.index < tl.scenes.length - 1 ? [hideStart, hideStart + F(EXIT)] : undefined,

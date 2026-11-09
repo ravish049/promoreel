@@ -16,7 +16,7 @@ import type { LaunchInput } from '../reel/spec'
 import { FORMAT_SIZE, MOTION_FPS } from '../reel/shared'
 import { useTextReady } from '../walk/context'
 import { LAUNCH_SFX, launchBedFile } from './audio'
-import { LaunchContext, counterCardW, counterValue, hookGeometry, useLaunch, type HookGeometry } from './context'
+import { LaunchContext, counterCardW, deepInk, counterValue, hookGeometry, useLaunch, type HookGeometry } from './context'
 import { counterHeight, launchLayout } from './layout'
 import { LEAD, at60, buildLaunchPlan, hudAway, type ScenePlan } from './plan'
 import { HookScene } from './scenes/Hook'
@@ -170,7 +170,7 @@ const Backdrop: React.FC<{ g: number }> = ({ g }) => {
           background: `radial-gradient(closest-side, ${rgba(t.highlight, 0.08)}, ${rgba(t.highlight, 0)})`,
         }}
       />
-      <AbsoluteFill style={{ background: `radial-gradient(ellipse at 50% 50%, ${rgba('#000000', 0)} 55%, ${rgba('#000000', 0.42)} 100%)` }} />
+      <AbsoluteFill style={{ background: `radial-gradient(ellipse at 50% 50%, ${rgba(deepInk(t), 0)} 55%, ${rgba(deepInk(t), 0.42)} 100%)` }} />
     </AbsoluteFill>
   )
 }
