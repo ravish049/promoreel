@@ -1,0 +1,36 @@
+{
+  "project": "sample-walk",
+  "updated": "2026-11-09T18:14:13.627Z",
+  "videos": [
+    {
+      "id": "walk-short",
+      "title": "Brindlebook feature walk",
+      "path": "out/walk-short.mp4",
+      "sheet": "out/walk-short-sheet.png",
+      "durationSec": 18.3,
+      "width": 1080,
+      "height": 1920,
+      "sizeBytes": 4213168,
+      "voice": "af_heart",
+      "created": "2026-11-09T18:14:13.627Z",
+      "spec": "reels/walk.json",
+      "format": "9x16",
+      "cut": "short"
+    },
+    {
+      "id": "walk-long",
+      "title": "Brindlebook feature walk",
+      "path": "out/walk-long.mp4",
+      "sheet": "out/walk-long-sheet.png",
+      "durationSec": 30.57,
+      "width": 1080,
+      "height": 1920,
+      "sizeBytes": 7213525,
+      "voice": "af_heart",
+      "created": "2026-11-09T18:13:33.181Z",
+      "spec": "reels/walk.json",
+      "format": "9x16",
+      "cut": "long"
+    }
+  ]
+}

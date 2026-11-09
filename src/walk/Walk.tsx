@@ -57,7 +57,7 @@ export const calculateWalkMetadata: CalculateMetadataFunction<WalkProps> = async
   const durations = Object.fromEntries(Object.entries(lines.lines).map(([k, v]) => [k, v.durationMs]))
   const words = Object.keys(captions).length ? captions : undefined
   const timeline = buildWalkTimeline(spec, spec.cut, durations, words)
-  for (const w of timeline.warnings) console.warn(`[${spec.id} ${spec.cut}] ${w}`)
+  for (const w of [...timeline.warnings, ...buildWalkPlan(spec, timeline).warnings]) console.warn(`[${spec.id} ${spec.cut}] ${w}`)
   const bedFile = walkBedFile(spec, spec.cut)
   const bed = (await exists(bedFile)) ? bedFile : null
   if (!bed) console.warn(`[${spec.id} ${spec.cut}] no music bed at public/${bedFile}: rendering the voice only (promoreel render writes it)`)

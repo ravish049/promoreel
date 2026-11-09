@@ -43,8 +43,9 @@ export const Close: React.FC<{ g: number }> = ({ g }) => {
   const slide = (1 - reveal) * (nameW + GAP) * 0.5
 
   // the tagline: one line if it fits at TAG_MIN or more, else its two parts on two rows
-  const a = tagline ? tagline[0].split(/\s+/).filter(Boolean) : []
-  const b = tagline ? tagline[1].split(/\s+/).filter(Boolean) : []
+  // a tagline may have one part only: the second is then empty (and nothing is drawn in the accent colour)
+  const a = (tagline?.[0] ?? '').split(/\s+/).filter(Boolean)
+  const b = (tagline?.[1] ?? '').split(/\s+/).filter(Boolean)
   const all = [...a, ...b]
   const oneLine = fitSize(all.join(' '), W / (1 + WORD_GAP * 0.4), TAG_MAX, 800, t.font, TRACK)
   const rows = oneLine >= TAG_MIN || !b.length ? [all] : [a, b]

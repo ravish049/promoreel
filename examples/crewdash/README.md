@@ -20,14 +20,32 @@ What's in it, and which part of the kit made each piece:
 ## What's here
 
 - `out/video-01.mp4`: the finished reel.
+- `reels/walk.json`: the feature walk's spec (long and short cuts); `out/walk-long.mp4`, `out/walk-short.mp4` and their
+  contact sheets.
 - `reels/video-01.json`: its spec, in promoreel's format (the hook's cards were a fixed layout in the original template).
 - `brand.json`: CrewDash's colours (ink `#181410`, paper `#EFEBE2`, orange `#FF5A00`, the app's blue `#0071E3`), Inter,
   the 15 features and the outro's two lines.
 - `public/brand/logo.svg`: the CrewDash mark. `public/brand/bg-loading-dock.jpg`: the loading-dock photo under every scene.
   The owner made it for this video.
 
-The recordings, the recording flows and the voice files aren't included, because they come from a private build of the
-product. So this project shows a real spec and brand next to the video they produced, but it can't be rendered again
+## The feature walk: "Dispatch to invoice"
+
+**▶ [`out/walk-long.mp4`](out/walk-long.mp4)** (36.5 s) and the ad cut **[`out/walk-short.mp4`](out/walk-short.mp4)**
+(18.0 s), from `reels/walk.json` in the `walk` style: no recordings, every screen drawn by the screen kit (dispatch →
+GPS clock-in on a phone → the client's sheet compared with ours → payroll → invoice), the script of CrewDash's Instagram
+reel of the same name, and the same Chatterbox voice as `video-01` (`exaggeration` 0.55, `cfgWeight` 0.45, seed 7; a few
+lines on their own seed). Unlike `video-01`, it renders again from this repo:
+
+```bash
+npx promoreel all examples/crewdash --reel walk     # needs Chatterbox: bash scripts/install-chatterbox.sh
+```
+
+The people, clients and amounts on the screens are made up.
+
+## Why `video-01` can't be rendered again
+
+Its recordings, the recording flows and the voice files aren't included, because they come from a private build of the
+product. So it shows a real spec and brand next to the video they produced, but it can't be rendered again
 from this repo. To make your own, start from `examples/generic`.
 
 The script was written before promoreel's script rules were. Its lines still have ellipses ("Quick question…"), which the

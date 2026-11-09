@@ -4,7 +4,8 @@ import React from 'react'
 import { EASE, enter, tween } from '../motion'
 import { rgba } from '../reel/theme'
 import type { ListScreen } from '../reel/spec'
-import { countText, sec, stagger } from './look'
+import { countText } from './look'
+import { COUNT_S, LIST_CHECK_S, ROW_IN_S, sec, stagger } from './timing'
 import { AppButton, Avatar, BUTTON_H, CardShell, CheckDisc, DW, GAP, HeadBadge, IconTile, PAD, Pill, ScreenHead, Spacer, clip, headHeight, useClock, usePalette, type ScreenProps } from './parts'
 
 const ROW_H = 108
@@ -19,15 +20,15 @@ export const List: React.FC<ScreenProps<ListScreen>> = ({ spec, progress = {}, f
   const { f, fps } = useClock(frame)
   const st = stagger(spec.rows.length, fps)
   const { fill, count, checkRows, click, done } = progress
-  const n = count === undefined ? 1 : tween(f, count, count + sec(1, fps), 0, 1, EASE.count)
+  const n = count === undefined ? 1 : tween(f, count, count + sec(COUNT_S, fps), 0, 1, EASE.count)
   return (
     <CardShell natural={listHeight(spec)} width={width} height={height} dw={dw} flat={flat} sweepAt={done} f={f}>
       <ScreenHead spec={spec} right={<HeadBadge spec={spec} button={spec.button} f={f} done={done} />} />
       {headHeight(spec) ? <div style={{ height: GAP, flexShrink: 0 }} /> : null}
       {spec.rows.map((r, i) => {
-        const inP = fill === undefined ? 1 : enter(f, fill + i * st, sec(0.9, fps), fps)
+        const inP = fill === undefined ? 1 : enter(f, fill + i * st, sec(ROW_IN_S, fps), fps)
         const ck = checkRows === undefined ? undefined : checkRows + i * st
-        const lit = ck === undefined ? 0 : tween(f, ck, ck + sec(0.4, fps), 0, 1, EASE.out)
+        const lit = ck === undefined ? 0 : tween(f, ck, ck + sec(LIST_CHECK_S, fps), 0, 1, EASE.out)
         return (
           <div
             key={i}

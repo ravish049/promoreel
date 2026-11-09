@@ -13,6 +13,7 @@ import { Icon, type IconName } from '../reel/icons'
 import { SAFE, luminance, rgba, useTheme, type Theme } from '../reel/theme'
 import { CheckDisc, Screen, screenSize, screenTarget, usePalette } from '../screens'
 import { PH, PW } from '../screens'
+import { lift as liftOf } from '../screens/look'
 import { at60, chainPos, smooth, type StepPlan, type WalkPlan } from './plan'
 import { fitSize, useWalk, wrapWords } from './context'
 
@@ -164,7 +165,9 @@ export const Backdrop: React.FC<{ g: number; cam: Cam }> = ({ g, cam }) => {
   const ox = (((-cam.x * cam.s * 0.25) % step) + step) % step
   const oy = (((-cam.y * cam.s * 0.25) % step) + step) % step
   const dot = rgba(light ? t.ink : t.paper, light ? 0.07 : 0.06)
-  const lift = `radial-gradient(ellipse 70% 45% at 50% 40%, ${rgba('#ffffff', light ? 0.55 : 0.05)} 0%, ${rgba('#ffffff', 0)} 100%)`
+  // the paper lifted toward white: a soft light, in the theme's own tint
+  const glow = liftOf(t.paper, 0.85)
+  const lift = `radial-gradient(ellipse 70% 45% at 50% 40%, ${rgba(glow, light ? 0.55 : 0.05)} 0%, ${rgba(glow, 0)} 100%)`
   return (
     <AbsoluteFill style={{ backgroundColor: t.paper, overflow: 'hidden' }}>
       <AbsoluteFill style={{ backgroundImage: `radial-gradient(${dot} 2.2px, transparent 2.6px)`, backgroundSize: `${step}px ${step}px`, backgroundPosition: `${ox}px ${oy}px` }} />

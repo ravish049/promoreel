@@ -1,0 +1,24 @@
+{
+  "name": "Brindlebook",
+  "colors": {
+    "ink": "#1D1A2B",
+    "paper": "#F6F2EC",
+    "accent": "#6D4BD1",
+    "highlight": "#1F7A8C",
+    "success": "#2E8B57"
+  },
+  "font": "Poppins",
+  "logo": "brand/logo.svg",
+  "features": [
+    { "label": "Online booking", "icon": "clock" },
+    { "label": "Owner check-in", "icon": "smartphone" },
+    { "label": "Weekly view", "icon": "line-chart" },
+    { "label": "Invoices", "icon": "file-text" }
+  ],
+  "outro": {
+    "title": "Bookings and invoices for small dog-grooming salons.",
+    "tagline": ["Book the groom,", "skip the calls."],
+    "cta": "Try it free · brindlebook.example",
+    "lines": []
+  }
+}

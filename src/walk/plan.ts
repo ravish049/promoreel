@@ -6,6 +6,7 @@
 // Frame counts below are tuned for 60 fps (the walk's default) and scaled to the video's fps.
 import type { IconName } from '../reel/icons'
 import type { ScreenAction, ScreenSpec, WalkSpec } from '../reel/spec'
+import { checkFrames, countFrames, fillFrames } from '../screens/timing'
 import type { WalkTimeline, WalkTLLine, WalkTLScene } from './timeline'
 
 /** Frames at 60 fps → frames at `fps`. */
@@ -74,6 +75,8 @@ export type WalkPlan = {
   trackerOut: number
   /** Scenes whose captions are hidden. */
   hideCaptionsIn: string[]
+  /** Steps too short for their screen's actions, or whose done lands before the screen has settled. */
+  warnings: string[]
 }
 
 /** What a screen has to animate, so defaults are only made for actions it shows. */
@@ -105,6 +108,7 @@ export function buildWalkPlan(spec: WalkSpec, tl: WalkTimeline): WalkPlan {
   const hookScene = tl.scenes.find((s) => s.kind === 'hook')
   const logoScene = tl.scenes.find((s) => s.kind === 'logo')!
   const worldOut = logoScene.from - F(4)
+  const warnings: string[] = []
 
   const steps: StepPlan[] = stepScenes.map((scene, index) => {
     const step = byId.get(scene.id)!
@@ -125,12 +129,22 @@ export function buildWalkPlan(spec: WalkSpec, tl: WalkTimeline): WalkPlan {
     for (const k of ['click', 'checkRows', 'fill', 'count', 'done'] as const) if (ev[k] !== undefined) p[k] = Math.max(enterAt, Math.min(hi, ev[k]))
     const sc = step.screen
     if (p.fill === undefined && hasRows(sc)) p.fill = clamp(landed - F(10))
-    if (p.count === undefined && counts(sc)) p.count = clamp((p.fill ?? landed) + sec(0.5))
+    // a default count starts as the fill finishes (a form's total rolls once its line items are in)
+    if (p.count === undefined && counts(sc)) p.count = clamp((p.fill ?? landed) + Math.max(sec(0.5), (p.fill === undefined ? 0 : fillFrames(sc, fps)) - sec(0.6)))
+    // the frame the screen has finished moving: rows and fields in, numbers landed, checks ticked
+    const settled = Math.max(
+      p.fill === undefined ? 0 : p.fill + fillFrames(sc, fps),
+      p.count === undefined ? 0 : p.count + countFrames(sc, fps),
+      p.checkRows === undefined ? 0 : p.checkRows + checkFrames(sc, fps),
+    )
     if (pressable(sc)) {
-      // pressed early enough that the busy state reads before the done state lands
-      if (p.click === undefined) p.click = Math.min(clamp(p.done !== undefined ? p.done - sec(0.55) : speechEnd - sec(0.9)), Math.max(lo, hi - sec(0.4)))
-      if (p.done === undefined) p.done = clamp(p.click + sec(0.55))
-    } else if (p.done === undefined) p.done = clamp(speechEnd - sec(0.2))
+      // pressed once the screen has settled, early enough that the busy state reads before the done state lands
+      if (p.click === undefined) p.click = Math.min(clamp(Math.max(p.done !== undefined ? p.done - sec(0.55) : speechEnd - sec(0.9), settled)), Math.max(lo, hi - sec(0.4)))
+      if (p.done === undefined) p.done = clamp(Math.max(p.click + sec(0.55), settled))
+    } else if (p.done === undefined) p.done = clamp(Math.max(speechEnd - sec(0.2), settled))
+    const s1 = (f: number) => `${(f / fps).toFixed(2)} s`
+    if (settled > hi) warnings.push(`step "${scene.id}": its screen is still filling or counting until ${s1(settled)}, but the step leaves at ${s1(hi)}; lengthen it (minMs or tailMs) or anchor fill / count earlier`)
+    else if (p.done! < settled) warnings.push(`step "${scene.id}": done lands at ${s1(p.done!)}, before the screen finishes filling or counting (${s1(settled)}); anchor done later or fill / count earlier`)
     return { id: scene.id, index, label: step.label, icon: step.icon, scene, lines, screen: sc, progress: p, done: p.done!, enterAt, leaveAt, moveIn }
   })
 
@@ -163,6 +177,7 @@ export function buildWalkPlan(spec: WalkSpec, tl: WalkTimeline): WalkPlan {
     worldOut,
     trackerOut: logoScene.from - F(24),
     hideCaptionsIn: cut.hideCaptionsIn ?? DEFAULT_HIDE_CAPTIONS,
+    warnings,
   }
 }
 
