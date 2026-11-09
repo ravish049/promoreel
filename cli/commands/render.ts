@@ -12,6 +12,7 @@ import type { LaunchSpec, Style, VideoSpec, WalkSpec } from '../../src/reel/spec
 import { voiceDir, type ResolvedLaunch, type ResolvedWalk } from '../../src/reel/shared'
 import { buildWalkTimeline, type WalkWords } from '../../src/walk/timeline'
 import { walkAudioJob } from '../../src/walk/audio'
+import { buildWalkPlan } from '../../src/walk/plan'
 import { buildLaunchPlan } from '../../src/launch/plan'
 import { LAUNCH_SFX_DIR, launchAudioJob, launchBedFile } from '../../src/launch/audio'
 import { writeBed } from '../audio/synth'
@@ -53,6 +54,9 @@ async function writeWalkBed({ project: p, job, step: st }: RenderContext) {
   const durations = Object.fromEntries(Object.entries(lines).map(([k, v]) => [k, v.durationMs]))
   const tl = buildWalkTimeline(spec as WalkSpec, job.cut!, durations, words)
   for (const w of tl.warnings) st.warn(`${job.name}: ${w}`)
+  // the plan's warnings (a step too short for its screen, a done before the screen settles) are only logged in the
+  // browser, which the render drops: report them here
+  for (const w of buildWalkPlan(spec as WalkSpec, tl).warnings) st.warn(`${job.name}: ${w}`)
   const audio = walkAudioJob(spec as WalkSpec, tl, { resolveMusic: (src) => path.resolve(p.publicDir, src) })
   const out = path.join(p.publicDir, 'audio', `${job.name}.wav`)
   const bed = writeBed(audio, out)

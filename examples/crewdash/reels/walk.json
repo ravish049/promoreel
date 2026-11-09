@@ -117,35 +117,35 @@
       "screen": {
         "kind": "list",
         "title": "Dispatch",
-        "subtitle": "JO-0006 · Fri, Oct 16 · 7:00",
+        "subtitle": "Bayview · Fri, Oct 16 · 7:00",
         "icon": "send",
         "badge": "Still to fill · 4",
         "rows": [
           {
             "initials": "DO",
             "title": "Daniel Okoye",
-            "subtitle": "Seat 1 · Cold-store loader",
+            "subtitle": "JO-0006 · Cold-store loader",
             "tag": "Available",
             "tagTone": "success"
           },
           {
             "initials": "LF",
             "title": "Lena Fischer",
-            "subtitle": "Seat 2 · Cold-store loader",
+            "subtitle": "JO-0006 · Cold-store loader",
             "tag": "Available",
             "tagTone": "success"
           },
           {
             "initials": "PN",
             "title": "Priya Nair",
-            "subtitle": "Seat 3 · Cold-store loader",
+            "subtitle": "JO-0014 · Freezer loader",
             "tag": "Available",
             "tagTone": "success"
           },
           {
             "initials": "MS",
             "title": "Marco Silva",
-            "subtitle": "Seat 4 · Cold-store loader",
+            "subtitle": "JO-0014 · Freezer loader",
             "tag": "Available",
             "tagTone": "success"
           }
@@ -392,13 +392,13 @@
           },
           {
             "label": "Freezer loader · JO-0014",
-            "detail": "Priya Nair, Marco Silva · 82.0 h",
-            "amount": "$2,542.00"
+            "detail": "Priya Nair, Marco Silva · 84.0 h",
+            "amount": "$2,604.00"
           }
         ],
         "total": {
           "label": "Total",
-          "value": "$4,960.00"
+          "value": "$5,022.00"
         }
       },
       "anchors": {
