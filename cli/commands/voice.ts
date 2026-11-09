@@ -4,12 +4,14 @@
 // The durations time the video: talking scenes stretch to their lines, phone lines sit on their recorded events.
 // Also writes out/voices/<reel>-<voice>.wav (the whole voice-over on the video's own timeline, to listen to) and
 // out/<reel>.timeline.json (where every line lands, plus any overlap warnings). A walk's lines are voiced the same way;
-// its timeline belongs to the walk composition, so it gets no listening sample here. A launch film has no voice.
+// its timeline belongs to the walk composition, so it gets no listening sample here, but every cut's timing warnings
+// (walkWarnings) print as warnings. A launch film has no voice.
 import fs from 'node:fs'
 import path from 'node:path'
 import { buildTimeline, type ClipManifest } from '../../src/reel/timeline'
 import type { PhoneScene } from '../../src/reel/spec'
-import { resolveSpec, voiceDir } from '../../src/reel/shared'
+import { resolveSpec, resolveWalk, voiceDir } from '../../src/reel/shared'
+import { walkWarnings, type WalkWords } from '../../src/walk/timeline'
 import { KIT, loadProject, pickReel, readJson, rel } from '../lib/project'
 import { step } from '../lib/progress'
 import { SR, readWav16, wav16 } from '../lib/wav'
@@ -71,7 +73,13 @@ export async function voice(projectDir: string, opts: { reel?: string; voices?: 
     fs.writeFileSync(linesPath, JSON.stringify(next, null, 2) + '\n')
     if (r.style === 'walk') {
       const ms = Object.values(next.lines).reduce((a, x) => a + x.durationMs, 0)
-      results[name] = { spokenSec: +(ms / 1000).toFixed(2) }
+      // every cut laid out on these takes (and the word timings, once captions have run), as render will lay them out
+      const capsFile = path.join(dir, 'captions.json')
+      const words = fs.existsSync(capsFile) ? readJson<WalkWords>(capsFile) : undefined
+      const durations = Object.fromEntries(Object.entries(next.lines).map(([k, x]) => [k, x.durationMs]))
+      const warnings = walkWarnings(resolveWalk(r, p.brand), durations, words)
+      for (const w of warnings) st.warn(`${name}: ${w}`)
+      results[name] = { spokenSec: +(ms / 1000).toFixed(2), warnings: warnings.length }
       continue
     }
 

@@ -12,7 +12,8 @@ import { Box, Camera, Cursor, EASE, drift, enter, exit, tween, type Cam, type Ca
 import { Icon, type IconName } from '../reel/icons'
 import { SAFE, luminance, rgba, useTheme, type Theme } from '../reel/theme'
 import { CheckDisc, Screen, screenSize, screenTarget, usePalette } from '../screens'
-import { PH, PW } from '../screens'
+import { PW } from '../screens'
+import { PH_MIN } from '../screens/Phone'
 import { lift as liftOf } from '../screens/look'
 import { at60, chainPos, smooth, type StepPlan, type WalkPlan } from './plan'
 import { fitSize, useWalk, wrapWords } from './context'
@@ -26,7 +27,7 @@ export const CHIP = { w: 1500, h: 380 }
  * y ~1148), with room for the camera's 2.5 % push-in before each move.
  */
 export const STAGE = { top: 360, bottom: 1126, left: 80, right: 1000 }
-/** A phone: as tall as fits in the same band. */
+/** A phone: as tall as fits in the same band, at its shortest design height (so it is as wide, and its type as large, as the band allows). */
 export const PHONE_STAGE = { top: 356, bottom: 1126 }
 /** The headline and the strapline of the hook. */
 const HOOK_W = SAFE.right - SAFE.left
@@ -61,7 +62,7 @@ export type World = {
 export const boxOf = (s: StepPlan['screen']): StepBox => {
   if (s.kind === 'phone') {
     const h = PHONE_STAGE.bottom - PHONE_STAGE.top
-    return { w: (h * PW) / PH, h, cy: PHONE_STAGE.top + h / 2 }
+    return { w: (h * PW) / PH_MIN, h, cy: PHONE_STAGE.top + h / 2 }
   }
   const n = screenSize(s)
   const u = Math.min((STAGE.right - STAGE.left) / n.width, (STAGE.bottom - STAGE.top) / n.height)

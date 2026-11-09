@@ -1,6 +1,6 @@
 {
   "project": "crewdash",
-  "updated": "2026-11-09T18:20:16.843Z",
+  "updated": "2026-11-09T18:37:40.486Z",
   "videos": [
     {
       "id": "walk-short",
@@ -10,9 +10,9 @@
       "durationSec": 18,
       "width": 1080,
       "height": 1920,
-      "sizeBytes": 5501840,
+      "sizeBytes": 5512798,
       "voice": "chatterbox",
-      "created": "2026-11-09T18:20:16.843Z",
+      "created": "2026-11-09T18:37:40.486Z",
       "spec": "reels/walk.json",
       "format": "9x16",
       "cut": "short"
@@ -25,9 +25,9 @@
       "durationSec": 36.52,
       "width": 1080,
       "height": 1920,
-      "sizeBytes": 10115470,
+      "sizeBytes": 10221771,
       "voice": "chatterbox",
-      "created": "2026-11-09T18:19:25.213Z",
+      "created": "2026-11-09T18:36:52.341Z",
       "spec": "reels/walk.json",
       "format": "9x16",
       "cut": "long"
