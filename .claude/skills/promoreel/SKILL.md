@@ -108,8 +108,9 @@ npx promoreel render projects/<app>       # out/<id>.mp4, out/<id>-sheet.png, ou
 npx promoreel sheet projects/<app>/out/<id>.mp4 /tmp/check.png --at 1,4,9,14,19,24,29,33
 ```
 A walk renders one video per cut and a launch film one per format, each with its own sheet. Read every contact sheet
-and go through `review.md` in this folder: text inside the safe zone, the right moment zoomed, captions in sync and
-spelled your way, nothing private on screen, nothing cut off at the edges in 16:9 or 1:1, and the close reads. Fix and
+and go through `review.md` in this folder (its `recorded` section, or its `walk and launch` section): text inside the
+safe zone, the right moment zoomed, captions in sync and spelled your way, nothing private on screen, nothing cut off
+at the edges in 16:9 or 1:1, and the close reads. Fix and
 re-render (only the changed step reruns: voice and captions cache unchanged lines).
 
 ## 9. Report

@@ -33,6 +33,7 @@ function parse(argv: string[]): Opts {
       const [k, v] = a.slice(2).split('=', 2)
       const isFlag = ['fresh', 'force', 'clobber', 'dry-run', 'no-sheet', 'json', 'pretty', 'help'].includes(k)
       const val = v ?? (isFlag ? true : argv[++i])
+      if (!isFlag && (val === undefined || val === '' || String(val).startsWith('--'))) throw new Error(`--${k} needs a value${k === 'style' ? ': --style walk, --style launch or --style recorded' : ''}`)
       if (multi.has(k)) o[k] = [...((o[k] as string[]) ?? []), String(val)]
       else o[k] = val
     } else (o._ as string[]).push(a)

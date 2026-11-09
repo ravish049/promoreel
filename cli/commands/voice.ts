@@ -5,7 +5,8 @@
 // Also writes out/voices/<reel>-<voice>.wav (the whole voice-over on the video's own timeline, to listen to) and
 // out/<reel>.timeline.json (where every line lands, plus any overlap warnings). A walk's lines are voiced the same way;
 // its timeline belongs to the walk composition, so it gets no listening sample here, but every cut's timing warnings
-// (walkWarnings) print as warnings. A launch film has no voice.
+// (walkWarnings) print as warnings (word timings of lines just re-voiced are stale until `captions` runs, so they are left
+// out; `all` passes quietWalk, as render prints the same warnings). A launch film has no voice.
 import fs from 'node:fs'
 import path from 'node:path'
 import { buildTimeline, type ClipManifest } from '../../src/reel/timeline'
@@ -33,7 +34,17 @@ export function loadManifests(publicDir: string, scenes: { type: string }[]): Re
   return out
 }
 
-export async function voice(projectDir: string, opts: { reel?: string; voices?: string[] }) {
+/**
+ * captions.json without the lines that were just voiced again: their old word timings belong to the old take. Those
+ * lines then count as not captioned yet, so a word anchor on one says to run captions instead of trusting stale times.
+ */
+export function freshWords(words: WalkWords | undefined, revoiced: Iterable<string>): WalkWords | undefined {
+  if (!words) return undefined
+  const drop = new Set(revoiced)
+  return Object.fromEntries(Object.entries(words).filter(([id]) => !drop.has(id)))
+}
+
+export async function voice(projectDir: string, opts: { reel?: string; voices?: string[]; quietWalk?: boolean }) {
   const st = step('voice')
   const p = loadProject(projectDir)
   const { spec } = pickReel(p, opts.reel)
@@ -75,10 +86,10 @@ export async function voice(projectDir: string, opts: { reel?: string; voices?: 
       const ms = Object.values(next.lines).reduce((a, x) => a + x.durationMs, 0)
       // every cut laid out on these takes (and the word timings, once captions have run), as render will lay them out
       const capsFile = path.join(dir, 'captions.json')
-      const words = fs.existsSync(capsFile) ? readJson<WalkWords>(capsFile) : undefined
+      const words = freshWords(fs.existsSync(capsFile) ? readJson<WalkWords>(capsFile) : undefined, jobs.map((j) => j.id))
       const durations = Object.fromEntries(Object.entries(next.lines).map(([k, x]) => [k, x.durationMs]))
       const warnings = walkWarnings(resolveWalk(r, p.brand), durations, words)
-      for (const w of warnings) st.warn(`${name}: ${w}`)
+      if (!opts.quietWalk) for (const w of warnings) st.warn(`${name}: ${w}`)
       results[name] = { spokenSec: +(ms / 1000).toFixed(2), warnings: warnings.length }
       continue
     }

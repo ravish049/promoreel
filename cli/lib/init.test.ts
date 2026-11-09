@@ -1,6 +1,7 @@
 // `promoreel init --style`: each style gets its starter files (a flow only for recorded), the placeholders are filled,
-// and the starter spec passes validation against the starter brand.   npm test
+// and the starter spec passes validation against the starter brand; an unknown or missing style is refused.   npm test
 import { test } from 'node:test'
+import { spawnSync } from 'node:child_process'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -49,6 +50,23 @@ test('init refuses an unknown style before writing anything', async () => {
   const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'promoreel-init-')), 'x')
   try {
     await assert.rejects(scaffold('reel', dir), /--style must be one of recorded, walk, launch/)
+    assert.equal(fs.existsSync(dir), false)
+  } finally {
+    fs.rmSync(path.dirname(dir), { recursive: true, force: true })
+  }
+})
+
+test('a bare --style is refused, not read as the recorded default', async () => {
+  const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'promoreel-init-')), 'x')
+  try {
+    await assert.rejects(scaffold('', dir), /--style needs a value/)
+    // through the CLI: `promoreel init <dir> --style` (nothing after it) and `--style --force`
+    const cli = path.join(__dirname, '..', '..', 'bin', 'promoreel.cjs')
+    for (const args of [['--style'], ['--style', '--force'], ['--style=']]) {
+      const r = spawnSync(process.execPath, [cli, 'init', dir, ...args, '--json'], { encoding: 'utf8' })
+      assert.equal(r.status, 1, `${args.join(' ')}: exits 1`)
+      assert.match(r.stdout, /--style needs a value/, `${args.join(' ')}: says why`)
+    }
     assert.equal(fs.existsSync(dir), false)
   } finally {
     fs.rmSync(path.dirname(dir), { recursive: true, force: true })

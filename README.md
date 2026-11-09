@@ -36,8 +36,8 @@ A short video shows what a web app does faster than a page of text. Making one b
 promoreel does that work with tools you already have:
 - **Your coding agent does the thinking.** Claude Code or Codex reads your app, proposes reel ideas, writes the flows and
   the script, then checks the frames. It runs on your existing subscription.
-- **The footage is real.** A recorder films your app at phone size (3×, 1170×2532) and logs every tap. The reel zooms
-  onto each tap, draws ripples and glows, and cuts out the waiting.
+- **The footage is real** (in the `recorded` style). A recorder films your app at phone size (3×, 1170×2532) and logs
+  every tap. The reel zooms onto each tap, draws ripples and glows, and cuts out the waiting.
 - **Everything else is free and local.**
   - Voice: Kokoro, or the more natural Chatterbox.
   - Captions: Whisper.
@@ -49,7 +49,7 @@ promoreel does that work with tools you already have:
 ## How it works
 
 <p align="center">
-  <img src="docs/media/how-it-works.svg" width="960" alt="1 Understand: your agent reads the app and writes flows and the script. 2 Record: Chromium at phone size, every tap logged. 3 Narrate: Kokoro or Chatterbox voice, Whisper captions. 4 Render: Remotion makes a 1080×1920 reel.">
+  <img src="docs/media/how-it-works.svg" width="960" alt="1 Understand: your agent reads the app and writes flows and the script. 2 Record: Chromium at phone size, every tap logged. 3 Narrate: Kokoro or Chatterbox voice, Whisper captions. 4 Render: Remotion makes the video.">
 </p>
 
 1. **Understand.** `promoreel repo` clones your GitHub repo with your own `gh` login, or uses a local folder. Your
@@ -70,8 +70,6 @@ promoreel does that work with tools you already have:
 | [`recorded`](docs/styles/recorded.md) (default) | Recordings of your running app, with zooms, tap ripples and jump cuts; scenes for a hook, a quiz, a terminal and a closing grid | 9:16 | Voice, captions | [TodoMVC](examples/generic/out/todo-promo.mp4) |
 | [`walk`](docs/styles/walk.md) | Screens described in JSON, shown one step at a time with a step tracker; a long and a short cut from one spec | 9:16 | Voice, captions, music | [Brindlebook](examples/sample-walk/out/walk-long.mp4) |
 | [`launch`](docs/styles/launch.md) | A headline, a counter, screens described in JSON with a cursor, and a logo close | 16:9, 9:16, 1:1 | Music and clicks, no voice | [CrewDash](examples/crewdash/out/launch-16x9.mp4) |
-
-`npx promoreel init my-app --style walk` (or `launch`) starts a project that renders as it is; edit its JSON from there.
 
 ## Quickstart (5 minutes)
 
@@ -98,6 +96,8 @@ On an M4 Max that took about 1 minute end to end, recording included. The first 
 (~330 MB) and the Whisper model (~140 MB), and builds whisper.cpp.
 
 No app to record? `npx promoreel all examples/sample-walk` renders a feature walk from JSON alone.
+Start your own with `npx promoreel init projects/my-app --style walk` (or `launch`): it renders as it is; edit its
+JSON from there.
 
 **Optional:** for the more natural Chatterbox voice (Python 3.11, about 2 GB), run `bash scripts/install-chatterbox.sh`.
 

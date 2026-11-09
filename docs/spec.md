@@ -216,7 +216,7 @@ seconds.
 | `formats` | `["9x16"]` | Any of `16x9`, `9x16`, `1x1` |
 | `music` | synthesised, 120 bpm, beat-synced | See [`music`](#music-walk-and-launch) |
 | `counter` | none | `{ label, value }`: a number that rolls up in the hook, waits in a corner, and drops in the payoff |
-| `scenes` | required | In order. Every scene has `id`, `kind` and `seconds` (> 0); cuts move onto the nearest beat |
+| `scenes` | required | In order. Every scene has `id`, `kind` and `seconds` (> 0; at least 1 for `screen` and `payoff`, 1.5 or more reads well); cuts move onto the nearest beat |
 
 `voice` and `lines` are not used (the CLI notes it if they are there).
 
@@ -225,7 +225,7 @@ seconds.
 | `hook` | `headline`: `[{ text, accent? }]`, one row each, `accent` rows in the accent colour. `counter` (default `true` when the spec has one): show the counter rolling up |
 | `screen` | `screen`: a [screen kit](#the-screen-kit) screen with a cursor that travels and clicks. `at`: `{ click?, checkRows?, fill?, count?, done? }` in seconds into the scene (defaults are chosen for you). `words`: short words over the screen, one per beat (`["Check.", "Retype.", "Repeat."]`) |
 | `payoff` | `cards`: `[{ title, icon?, lines?, done? }]` that land one by one, then tick off. `words`, as above. `counterTo`: where the counter drops (default 0) |
-| `logo` | The brand's logo builds, then `title` (default `brand.name`), `tagline` (`[words, accentWords]`, default `brand.outro.tagline`), `line` (default `brand.outro.title`) and a `cta` pill (default `brand.outro.cta`; one of the two is required) |
+| `logo` | The brand's logo builds, then `title` (default `brand.name`), `tagline` (`[words, accentWords?]`, the accent part optional, default `brand.outro.tagline`), `line` (default `brand.outro.title`) and a `cta` pill (default `brand.outro.cta`; one of the two is required) |
 
 ## The screen kit
 The screens in walks and launch films are drawn from JSON. Every screen has a `kind`, and all but `phone` can carry a

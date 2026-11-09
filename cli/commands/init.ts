@@ -45,6 +45,7 @@ const NEXT: Record<Style, string> = {
 export async function init(dirArg: string | undefined, opts: { name?: string; url?: string; style?: string; force?: boolean }) {
   const st = step('init')
   if (!dirArg) throw new Error('usage: promoreel init <folder> [--style recorded|walk|launch] [--name "My App"] [--url http://localhost:3000]')
+  if (opts.style === '') throw new Error(`--style needs a value: one of ${STYLES.join(', ')}`)
   const style = (opts.style ?? 'recorded') as Style
   if (!STYLES.includes(style)) throw new Error(`--style must be one of ${STYLES.join(', ')} (got "${opts.style}")`)
   const dir = path.resolve(dirArg)
