@@ -24,9 +24,10 @@ export const FeatureGridOutro: React.FC<{ scene: TLScene & { spec: EndScene } }>
   const frame = useCurrentFrame() - 8
   const { fps } = useVideoConfig()
   const features = t.brand.features.slice(0, 15)
-  const title = scene.spec.title ?? t.brand.outro.title
-  const cta = scene.spec.cta ?? t.brand.outro.cta
-  const tagline = t.brand.outro.tagline
+  // a recorded reel always has brand.outro (the CLI checks it); the fallbacks only keep the types honest
+  const title = scene.spec.title ?? t.brand.outro?.title ?? t.brand.name
+  const cta = scene.spec.cta ?? t.brand.outro?.cta ?? ''
+  const tagline = t.brand.outro?.tagline
   const pHead = spring({ frame, fps, config: { damping: 14, stiffness: 140 } })
   const pLogo = spring({ frame: frame - 2, fps, config: { damping: 11, stiffness: 160 } })
   const rows = Math.ceil(features.length / COLS)

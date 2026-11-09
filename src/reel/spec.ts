@@ -1,5 +1,6 @@
 // The shape of a reel spec (<project>/reels/<id>.json) and of a project's brand (<project>/brand.json).
-// One spec = one video. The CLI merges the brand into the spec and hands both to Remotion as props.
+// One spec = one video in one style (recorded, walk or launch), rendered in one or more formats. The CLI merges the
+// brand into the spec and hands both to Remotion as props.
 import type { IconName } from './icons'
 
 // ── voice lines ─────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -204,6 +205,41 @@ export type SceneSpec = HookScene | QuizScene | PhoneScene | TerminalScene | Sho
 /** Cards on the backdrop: solid paper with ink words (default), or frosted glass. */
 export type CardStyle = 'solid' | 'glass'
 
+// ── styles and formats ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * What kind of video a spec makes:
+ * - recorded: phone recordings of your app, zooms, captions (the default);
+ * - walk: a voiced feature walk over drawn screens, one step at a time;
+ * - launch: a music-only launch film with a kinetic headline, drawn screens and a logo close.
+ */
+export type Style = 'recorded' | 'walk' | 'launch'
+
+/** The canvas: 9x16 = 1080×1920, 16x9 = 1920×1080, 1x1 = 1080×1080. */
+export type Format = '9x16' | '16x9' | '1x1'
+
+/** The music bed: synthesised on the bpm grid, or your own track (`src`, in public/) ducked under the voice. */
+export type MusicSpec = {
+  bpm?: number
+  src?: string
+  /** Level of the bed before ducking, dB (default 0). */
+  gainDb?: number
+  /** Nudge each scene cut onto the nearest beat (never into a spoken word). */
+  beatSync?: boolean
+}
+
+/** The fields every style shares. */
+type SpecBase = {
+  id: string
+  /** Shown in the manifest and the studio's gallery. */
+  title?: string
+  fps?: number
+  /** H.264 quality for `render` (default 18; 23–26 gives much smaller files that still read sharp). `--crf` overrides it. */
+  crf?: number
+  /** The canvases to render (default ["9x16"]). Each one is its own video: out/<id>.mp4, out/<id>-16x9.mp4, out/<id>-1x1.mp4. */
+  formats?: Format[]
+}
+
 // ── the reel ────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export type VoiceSettings = {
@@ -224,11 +260,9 @@ export type VoiceSettings = {
   volume?: number
 }
 
-export type ReelSpec = {
-  id: string
-  /** Shown in the manifest and the studio's gallery. */
-  title?: string
-  fps?: number
+/** A `recorded` reel: phone recordings of the app, a voice-over and captions (9x16 only). */
+export type ReelSpec = SpecBase & {
+  style?: 'recorded'
   width?: number
   height?: number
   voice: VoiceSettings
@@ -238,8 +272,6 @@ export type ReelSpec = {
     /** Hide the captions during these scenes. */
     hideIn?: string[]
   }
-  /** H.264 quality for `render` (default 18; 23–26 gives much smaller files that still read sharp). `--crf` overrides it. */
-  crf?: number
   /** The tap sound (default on: sfx/tap.wav, which the CLI puts in public/). */
   sfx?: { tap?: string | false; tapVolume?: number }
   /** Frames of the transition INTO each scene after the first (default 12). */
@@ -280,17 +312,253 @@ export type Brand = {
   look?: { cards?: CardStyle }
   /** The closing grid: up to 15 tiles (3 columns). */
   features: Feature[]
-  outro: {
-    title: string
-    /** The words, then the last one in the accent colour: ["Everything a small agency needs.", "Covered."] */
-    tagline?: [string, string]
-    cta: string
-    /** The outro's own voice: every video of the project ends with these lines over the grid. */
-    lines: LineSpec[]
-    gapMs?: number
-    tailMs?: number
-  }
+  /** The recorded style's closing (required for recorded reels); walk and launch fall back to its title, tagline and cta. */
+  outro?: BrandOutro
+}
+
+export type BrandOutro = {
+  title: string
+  /** The words, then the last one in the accent colour: ["Everything a small agency needs.", "Covered."] */
+  tagline?: [string, string]
+  cta: string
+  /** The outro's own voice: every video of the project ends with these lines over the grid. */
+  lines: LineSpec[]
+  gapMs?: number
+  tailMs?: number
 }
 
 /** What Remotion receives: the spec with its brand merged in. */
 export type ReelInput = ReelSpec & { brand: Brand }
+
+// ── the screen kit: drawn UI screens described in JSON (walk and launch) ──────────────────────────────────────────────────
+
+/** A colour role from the theme, for a pill or a value. */
+export type Tone = 'accent' | 'highlight' | 'success' | 'muted'
+
+/**
+ * The named moments a screen animates on. Walk steps pin them to the voice with anchors of the same name; launch scenes
+ * pin them to seconds. A screen ignores the ones it has no use for.
+ * - click: the cursor (or a finger) presses the button / action;
+ * - checkRows: rows tick off one by one;
+ * - fill: fields and line items fill in;
+ * - count: numbers roll to their values;
+ * - done: the button turns to its done state and the card gets its light sweep.
+ */
+export type ScreenAction = 'click' | 'checkRows' | 'fill' | 'count' | 'done'
+
+/** The heading every screen card can carry. */
+export type ScreenHeading = {
+  title?: string
+  subtitle?: string
+  icon?: IconName
+  /** A small pill beside the title, e.g. "Draft". */
+  badge?: string
+}
+
+/** The primary button: its label at rest, while busy, and when done ("Send" → "Sending…" → "Sent"). */
+export type ScreenButton = { label: string; busy?: string; done?: string }
+
+export type ListRow = {
+  title: string
+  subtitle?: string
+  /** Right-aligned value, e.g. "$931.00" or "8.0 h". */
+  value?: string
+  /** A pill under or beside the value. */
+  tag?: string
+  tagTone?: Tone
+  /** The row's avatar: initials in a disc, or an icon tile (initials win when both are set). */
+  initials?: string
+  icon?: IconName
+}
+
+export type ListScreen = ScreenHeading & {
+  kind: 'list'
+  rows: ListRow[]
+  button?: ScreenButton
+}
+
+export type TableScreen = ScreenHeading & {
+  kind: 'table'
+  columns: string[]
+  /** One string per column. */
+  rows: string[][]
+  /**
+   * Compare two columns (indexes into `columns`): rows that differ get a diff pill, rows that match a check disc.
+   * `diffLabel` replaces the computed difference in the pill (e.g. "differs").
+   */
+  compare?: { columns: [number, number]; diffLabel?: string }
+  /** A line under the table, e.g. "Ours 40.0 h · client 38.0 h · 1 differs". */
+  summary?: string
+  button?: ScreenButton
+}
+
+export type FormField = { label: string; value: string }
+export type FormItem = { label: string; detail?: string; amount: string }
+
+export type FormScreen = ScreenHeading & {
+  kind: 'form'
+  fields?: FormField[]
+  items?: FormItem[]
+  total?: { label: string; value: string }
+  button?: ScreenButton
+}
+
+export type StatScreen = ScreenHeading & {
+  kind: 'stat'
+  /** The number the odometer lands on (an integer; any number of digits). */
+  value: number
+  /** Where it rolls from (default 0). */
+  from?: number
+  /** Drawn before / after the number, e.g. "$" / " h". */
+  prefix?: string
+  suffix?: string
+  label: string
+}
+
+/** The screens a phone frame can wrap. */
+export type InnerScreen = ListScreen | TableScreen | FormScreen | StatScreen
+
+export type PhoneScreen = {
+  kind: 'phone'
+  screen: InnerScreen
+  /** A big round action button over the screen, e.g. { label: "Clock in", icon: "map-pin", done: "Clocked in" }. */
+  action?: { label: string; icon?: IconName; done?: string }
+  tabs?: { label: string; icon: IconName }[]
+  /** The lit tab (index into `tabs`, default 0). */
+  activeTab?: number
+  statusBarTime?: string
+}
+
+export type ScreenSpec = InnerScreen | PhoneScreen
+export type ScreenKind = ScreenSpec['kind']
+
+// ── the walk style ──────────────────────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A moment pinned to the voice, resolved to a frame by the walk timeline:
+ * - { line?, word?, offsetMs? }: a word of a line (its text, or its index; negative counts from the end). Without
+ *   `line`, the scene's first line in the cut; without `word`, the line's start.
+ * - { scene, offsetMs? }: the start of a scene ("hook", a step id, or "logo").
+ * `offsetMs` moves it later (or, negative, earlier).
+ */
+export type Anchor = { line?: string; word?: string | number; offsetMs?: number } | { scene: string; offsetMs?: number }
+
+/** One step of the walk: a labelled stop on the tracker with its own drawn screen. */
+export type WalkStep = {
+  /** Unique, and not "hook" or "logo" (those are the walk's own scenes). */
+  id: string
+  /** The tracker's label, e.g. "Client sheet". */
+  label: string
+  icon: IconName
+  screen: ScreenSpec
+  /**
+   * When things happen on the screen, by name. Names that match a `ScreenAction` (click, checkRows, fill, count, done)
+   * drive the screen; a cut can override any of them.
+   */
+  anchors?: Record<string, Anchor>
+}
+
+/** How long a scene of a cut runs: its lines (in order), padded by lead / gap / tail, never shorter than minMs. */
+export type WalkSceneTiming = {
+  lines: string[]
+  minMs?: number
+  leadMs?: number
+  tailMs?: number
+}
+
+/** One cut of the walk (e.g. "long" ≈ 40 s, "short" ≈ 15 s): which steps it shows and which lines it speaks. */
+export type WalkCut = {
+  /** The visual hook (spec.hook's headline) under these lines; leave out to start on the first step. */
+  hook?: WalkSceneTiming
+  /** The steps this cut shows, in order (the tracker lists only these). */
+  steps: (WalkSceneTiming & { step: string; anchors?: Record<string, Anchor> })[]
+  /** The logo, tagline and CTA close. */
+  logo: WalkSceneTiming & { anchors?: Record<string, Anchor> }
+  /** The tracker pill: "Step 2 of 5 · GPS clock-in" (numbered, default) or just the label. */
+  tracker?: 'numbered' | 'title'
+  /** Hide the captions during these scenes ("hook", step ids, "logo"). */
+  hideCaptionsIn?: string[]
+}
+
+export type WalkSpec = SpecBase & {
+  style: 'walk'
+  voice: VoiceSettings
+  captions?: { model?: string }
+  music?: MusicSpec
+  lines: LineSpec[]
+  steps: WalkStep[]
+  /** At least one cut; each renders to its own video. */
+  cuts: Record<string, WalkCut>
+  /** The visual hook: the logo and a headline over the lit chain of steps. */
+  hook?: { headline: string; sub?: string }
+  /** The close's copy (each falls back to brand.outro). */
+  close?: { title?: string; tagline?: [string, string]; cta?: string }
+  /** Default pacing, ms: before a scene's first line, between its lines, after its last line, the hold after the close. */
+  pace?: { leadMs?: number; gapMs?: number; tailMs?: number; minMs?: number; endHoldMs?: number }
+}
+
+// ── the launch style ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+type LaunchSceneBase = {
+  id: string
+  /** How long the scene runs (the composition moves its cut onto the nearest beat of music.bpm). */
+  seconds: number
+}
+
+/** A kinetic headline, word by word; rows with `accent` are drawn in the accent colour. The counter rolls up here. */
+export type LaunchHook = LaunchSceneBase & {
+  kind: 'hook'
+  headline: { text: string; accent?: boolean }[]
+  /** Show the spec's counter rolling up to its value (default true when the spec has a counter). */
+  counter?: boolean
+}
+
+/** One drawn screen with a cursor that travels, hesitates and clicks. */
+export type LaunchScreen = LaunchSceneBase & {
+  kind: 'screen'
+  screen: ScreenSpec
+  /** When each screen action happens, seconds into the scene (defaults chosen by the composition). */
+  at?: Partial<Record<ScreenAction, number>>
+  /** Kinetic words over the screen, one per beat, e.g. ["Check.", "Retype.", "Repeat."]. */
+  words?: string[]
+}
+
+/** Cards land one by one, then a checkmark cascade; the counter drops to `counterTo`. */
+export type LaunchPayoff = LaunchSceneBase & {
+  kind: 'payoff'
+  cards: { title: string; icon?: IconName; lines?: string[]; done?: string }[]
+  words?: string[]
+  /** Where the counter lands (default 0). */
+  counterTo?: number
+}
+
+/** The brand logo builds, then the tagline and a CTA pill (each falls back to brand.outro). */
+export type LaunchLogo = LaunchSceneBase & {
+  kind: 'logo'
+  title?: string
+  tagline?: [string, string]
+  line?: string
+  cta?: string
+}
+
+export type LaunchScene = LaunchHook | LaunchScreen | LaunchPayoff | LaunchLogo
+export type LaunchSceneKind = LaunchScene['kind']
+
+/** A launch film: music and clicks, no voice. Renders in every format it lists. */
+export type LaunchSpec = SpecBase & {
+  style: 'launch'
+  music?: MusicSpec
+  /** A number that rolls up in the hook and drops in the payoff, e.g. { label: "Timesheets to match", value: 140 }. */
+  counter?: { label: string; value: number }
+  scenes: LaunchScene[]
+}
+
+// ── any spec, and what each composition receives ────────────────────────────────────────────────────────────────────────
+
+export type VideoSpec = ReelSpec | WalkSpec | LaunchSpec
+
+/** The Walk composition's props: one cut of a walk spec, with its brand. */
+export type WalkInput = WalkSpec & { brand: Brand; cut: string; format: Format }
+
+/** The Launch composition's props: a launch spec in one format, with its brand. */
+export type LaunchInput = LaunchSpec & { brand: Brand; format: Format }

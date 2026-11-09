@@ -20,7 +20,8 @@ export async function captions(projectDir: string, opts: { reel?: string; voice?
   const st = step('captions')
   const p = loadProject(projectDir)
   const { spec } = pickReel(p, opts.reel)
-  const r = resolveSpec(spec, p.brand)
+  if (spec.style === 'launch') throw new Error(`${spec.id} is a launch film: it has no voice, so there is nothing to caption`)
+  const r = spec.style === 'walk' ? spec : resolveSpec(spec, p.brand)
   const voice = opts.voice ?? r.voice.use
   const model = (r.captions?.model ?? 'base.en') as WhisperModel
   const whisperPath = path.join(KIT, '.cache', 'whisper.cpp')

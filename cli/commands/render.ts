@@ -1,31 +1,53 @@
 // promoreel render <project> [--reel id] [--crf 18] [--no-sheet]
-// Bundles the template, renders the reel to out/<id>.mp4 (H.264, 1080×1920), makes out/<id>-sheet.png (8 frames), and
-// adds the video to out/manifest.json. Progress comes from Remotion's own render callback.
+// Bundles the template once, then renders every video the spec makes with its style's composition (Reel, Walk or
+// Launch): one per format (out/<id>.mp4 for 9:16, out/<id>-16x9.mp4, out/<id>-1x1.mp4) and, for a walk with several
+// cuts, one per cut (out/<id>-<cut>.mp4). Each gets a contact sheet (8 frames) and its own entry in out/manifest.json.
+// A style can run steps before and after each video (RENDER_HOOKS: e.g. build the music bed first, master the sound
+// after). Progress comes from Remotion's own render callback.
 import fs from 'node:fs'
 import path from 'node:path'
 import { bundle } from '@remotion/bundler'
 import { renderMedia, selectComposition } from '@remotion/renderer'
-import { KIT, buildProps, ensurePublic, loadProject, pickReel, rel } from '../lib/project'
+import type { Style, VideoSpec } from '../../src/reel/spec'
+import { KIT, ensurePublic, loadProject, pickReel, rel, renderJobs, type Project, type RenderJob } from '../lib/project'
 import { step } from '../lib/progress'
-import { upsertVideo } from '../lib/manifest'
+import { upsertVideo, type VideoEntry } from '../lib/manifest'
 import { probeDuration, probeSize } from '../lib/sh'
 import { contactSheet } from './sheet'
 
-/** The props Remotion gets, written to out/.props-<id>.json (Studio reads the same file). */
+/** What a render hook gets: the project, the spec, the video being made, where it goes, and the render step's reporter. */
+export type RenderContext = { project: Project; spec: VideoSpec; job: RenderJob; out: string; step: ReturnType<typeof step> }
+export type RenderHook = (ctx: RenderContext) => void | Promise<void>
+
+/**
+ * Per-style steps around each video: `beforeRender` runs before Remotion renders it (e.g. write the audio its
+ * composition plays), `afterRender` once the mp4 is written and before the sheet and manifest (e.g. master its sound in
+ * place). They run in order.
+ */
+export const RENDER_HOOKS: Record<Style, { beforeRender: RenderHook[]; afterRender: RenderHook[] }> = {
+  recorded: { beforeRender: [], afterRender: [] },
+  walk: { beforeRender: [], afterRender: [] },
+  launch: { beforeRender: [], afterRender: [] },
+}
+
+/** The props Remotion gets, written to out/.props-<id>.json (Studio reads the same file): the spec's first video. */
 export function writeProps(projectDir: string, reel?: string) {
   const p = loadProject(projectDir)
   const { spec, file } = pickReel(p, reel)
   ensurePublic(p)
-  const props = buildProps(p, spec)
+  const jobs = renderJobs(p, spec)
+  const props = jobs[0].props
   fs.mkdirSync(p.outDir, { recursive: true })
   const propsFile = path.join(p.outDir, `.props-${spec.id}.json`)
   fs.writeFileSync(propsFile, JSON.stringify(props))
-  return { p, spec, file, props, propsFile }
+  return { p, spec, file, props, propsFile, jobs }
 }
 
-export async function render(projectDir: string, opts: { reel?: string; crf?: number; sheet?: boolean; out?: string }) {
+export async function render(projectDir: string, opts: { reel?: string; crf?: number; sheet?: boolean; out?: string }): Promise<VideoEntry[]> {
   const st = step('render')
-  const { p, spec, file, props } = writeProps(projectDir, opts.reel)
+  const { p, spec, file, jobs } = writeProps(projectDir, opts.reel)
+  if (opts.out && jobs.length > 1) throw new Error(`--out names one file, and ${spec.id} makes ${jobs.length} videos (${jobs.map((j) => `${j.name}.mp4`).join(', ')})`)
+  const hooks = RENDER_HOOKS[jobs[0].style]
   st.start(`${spec.id}: bundling the template`)
   let lastPct = -1
   const serveUrl = await bundle({
@@ -38,54 +60,71 @@ export async function render(projectDir: string, opts: { reel?: string; crf?: nu
       }
     },
   })
-  const inputProps = props as unknown as Record<string, unknown>
-  const composition = await selectComposition({ serveUrl, id: 'Reel', inputProps, logLevel: 'error' })
-  const seconds = composition.durationInFrames / composition.fps
-  st.progress(10, `${spec.id}: ${seconds.toFixed(1)} s, ${composition.durationInFrames} frames`)
-  const out = opts.out ? path.resolve(opts.out) : path.join(p.outDir, `${spec.id}.mp4`)
-  fs.mkdirSync(path.dirname(out), { recursive: true })
-  let lastEmit = 0
-  await renderMedia({
-    composition,
-    serveUrl,
-    codec: 'h264',
-    crf: opts.crf ?? spec.crf ?? 18,
-    imageFormat: 'jpeg',
-    jpegQuality: 92,
-    pixelFormat: 'yuv420p',
-    outputLocation: out,
-    inputProps,
-    logLevel: 'error',
-    onProgress: ({ progress, renderedFrames, encodedFrames }) => {
-      const now = Date.now()
-      if (now - lastEmit < 1500 && progress < 1) return
-      lastEmit = now
-      st.progress(10 + progress * 85, `frames ${renderedFrames}/${composition.durationInFrames}, encoded ${encodedFrames}`)
-    },
-  })
-  const durationSec = +probeDuration(out).toFixed(2)
-  let sheetRel: string | undefined
-  if (opts.sheet !== false) {
-    const sheetPath = out.replace(/\.mp4$/, '') + '-sheet.png'
-    contactSheet(out, sheetPath)
-    sheetRel = rel(p, sheetPath)
-    st.progress(98, `contact sheet ${sheetRel}`)
+  // each video gets an equal share of the 10–100 % after bundling
+  const share = 90 / jobs.length
+  const entries: VideoEntry[] = []
+  for (const [i, job] of jobs.entries()) {
+    const base = 10 + i * share
+    const pct = (x: number) => base + (x / 90) * share
+    const label = jobs.length > 1 ? job.name : spec.id
+    const out = opts.out ? path.resolve(opts.out) : path.join(p.outDir, `${job.name}.mp4`)
+    fs.mkdirSync(path.dirname(out), { recursive: true })
+    const ctx: RenderContext = { project: p, spec, job, out, step: st }
+    for (const h of hooks.beforeRender) await h(ctx)
+    const inputProps = job.props as unknown as Record<string, unknown>
+    const composition = await selectComposition({ serveUrl, id: job.composition, inputProps, logLevel: 'error' })
+    const seconds = composition.durationInFrames / composition.fps
+    st.progress(pct(0), `${label}: ${seconds.toFixed(1)} s, ${composition.durationInFrames} frames`)
+    let lastEmit = 0
+    await renderMedia({
+      composition,
+      serveUrl,
+      codec: 'h264',
+      crf: opts.crf ?? spec.crf ?? 18,
+      imageFormat: 'jpeg',
+      jpegQuality: 92,
+      pixelFormat: 'yuv420p',
+      outputLocation: out,
+      inputProps,
+      logLevel: 'error',
+      onProgress: ({ progress, renderedFrames, encodedFrames }) => {
+        const now = Date.now()
+        if (now - lastEmit < 1500 && progress < 1) return
+        lastEmit = now
+        st.progress(pct(progress * 85), `${jobs.length > 1 ? `${job.name}: ` : ''}frames ${renderedFrames}/${composition.durationInFrames}, encoded ${encodedFrames}`)
+      },
+    })
+    for (const h of hooks.afterRender) await h(ctx)
+    const durationSec = +probeDuration(out).toFixed(2)
+    let sheetRel: string | undefined
+    if (opts.sheet !== false) {
+      const sheetPath = out.replace(/\.mp4$/, '') + '-sheet.png'
+      contactSheet(out, sheetPath)
+      sheetRel = rel(p, sheetPath)
+      st.progress(pct(88), `contact sheet ${sheetRel}`)
+    }
+    const { width, height } = probeSize(out)
+    const voice = 'voice' in spec ? spec.voice?.use : undefined
+    const entry: VideoEntry = {
+      id: job.name,
+      title: spec.title ?? spec.id,
+      path: rel(p, out),
+      ...(sheetRel ? { sheet: sheetRel } : {}),
+      durationSec,
+      width,
+      height,
+      sizeBytes: fs.statSync(out).size,
+      ...(voice ? { voice } : {}),
+      created: new Date().toISOString(),
+      spec: rel(p, file),
+      format: job.format,
+      ...(job.cut ? { cut: job.cut } : {}),
+    }
+    upsertVideo(p.outDir, p.name, entry)
+    entries.push(entry)
+    if (jobs.length > 1) st.log(`${entry.path} · ${durationSec} s`)
   }
-  const { width, height } = probeSize(out)
-  const entry = {
-    id: spec.id,
-    title: spec.title ?? spec.id,
-    path: rel(p, out),
-    ...(sheetRel ? { sheet: sheetRel } : {}),
-    durationSec,
-    width,
-    height,
-    sizeBytes: fs.statSync(out).size,
-    voice: spec.voice.use,
-    created: new Date().toISOString(),
-    spec: rel(p, file),
-  }
-  upsertVideo(p.outDir, p.name, entry)
-  st.done(`${entry.path} · ${durationSec} s`, entry)
-  return entry
+  if (entries.length === 1) st.done(`${entries[0].path} · ${entries[0].durationSec} s`, entries[0])
+  else st.done(`${entries.length} videos: ${entries.map((e) => e.path).join(', ')}`, { videos: entries })
+  return entries
 }

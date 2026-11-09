@@ -2,11 +2,14 @@
 // reads only this file: no scanning, no guessing.
 //
 // { "project": "generic", "updated": "…", "videos": [ { "id", "title", "path", "sheet", "durationSec", "width", "height",
-//   "sizeBytes", "voice", "created", "spec" } ] }   — paths are relative to the project folder.
+//   "sizeBytes", "voice", "created", "spec", "format", "cut" } ] }   — paths are relative to the project folder.
+// Each rendered file is its own entry: a launch film in three formats is three entries (ids launch, launch-16x9, …).
 import fs from 'node:fs'
 import path from 'node:path'
+import type { Format } from '../../src/reel/spec'
 
 export type VideoEntry = {
+  /** The file's name under out/ without .mp4: the reel id, plus -<cut> and -<format> when it has them. */
   id: string
   title: string
   path: string
@@ -15,9 +18,13 @@ export type VideoEntry = {
   width: number
   height: number
   sizeBytes: number
-  voice: string
+  /** The voice it plays; a launch film has none. */
+  voice?: string
   created: string
   spec: string
+  format?: Format
+  /** The walk cut this file is (e.g. "short"). */
+  cut?: string
 }
 
 export type Manifest = { project: string; updated: string; videos: VideoEntry[] }

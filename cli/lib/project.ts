@@ -8,8 +8,9 @@
 //     out/                  renders, contact sheets, manifest.json
 import fs from 'node:fs'
 import path from 'node:path'
-import type { Brand, ReelSpec, PhoneScene, ShowcaseScene } from '../../src/reel/spec'
-import { resolveSpec, type Resolved } from '../../src/reel/shared'
+import type { Anchor, Brand, Format, LaunchSpec, LineSpec, PhoneScene, ReelSpec, ScreenSpec, ShowcaseScene, Style, VideoSpec, WalkSpec } from '../../src/reel/spec'
+import { FORMAT_SIZE, STYLES, cutsOf, formatsOf, resolveLaunch, resolveSpec, resolveWalk, styleOf, type Resolved, type ResolvedLaunch, type ResolvedWalk } from '../../src/reel/shared'
+import { ICON_NAMES } from '../../src/reel/icons'
 
 /** The kit's own folder (where package.json is). */
 export const KIT = path.resolve(__dirname, '..', '..')
@@ -39,42 +40,211 @@ export function loadProject(dirArg: string | undefined): Project {
   const brand = readJson<Brand>(brandFile)
   for (const k of ['ink', 'paper', 'accent'] as const) if (!brand.colors?.[k]) throw new Error(`brand.json: colors.${k} is required`)
   if (!Array.isArray(brand.features)) brand.features = []
-  if (!brand.outro) throw new Error('brand.json: outro { title, cta, lines } is required')
   const reelsDir = path.join(dir, 'reels')
   const reels = fs.existsSync(reelsDir)
     ? fs
         .readdirSync(reelsDir)
         .filter((f) => f.endsWith('.json'))
         .sort()
-        .map((f) => ({ id: readJson<ReelSpec>(path.join(reelsDir, f)).id, file: path.join(reelsDir, f) }))
+        .map((f) => ({ id: readJson<VideoSpec>(path.join(reelsDir, f)).id, file: path.join(reelsDir, f) }))
     : []
   return { dir, name: path.basename(dir), brand, publicDir: path.join(dir, 'public'), outDir: path.join(dir, 'out'), reels }
 }
 
 /** The reel to work on: --reel <id>, or the project's only reel. */
-export function pickReel(p: Project, id: string | undefined): { spec: ReelSpec; file: string } {
+export function pickReel(p: Project, id: string | undefined): { spec: VideoSpec; file: string } {
   if (p.reels.length === 0) throw new Error(`${p.name} has no reels: add one to ${path.join(p.dir, 'reels')}/`)
   const r = id ? p.reels.find((x) => x.id === id || path.basename(x.file, '.json') === id) : p.reels.length === 1 ? p.reels[0] : null
   if (!r) throw new Error(id ? `no reel "${id}" in ${p.name} (has: ${p.reels.map((x) => x.id).join(', ')})` : `${p.name} has several reels; pick one with --reel (${p.reels.map((x) => x.id).join(', ')})`)
-  const spec = readJson<ReelSpec>(r.file)
-  validateSpec(spec, r.file)
+  const spec = readJson<VideoSpec>(r.file)
+  validateSpec(spec, r.file, p.brand)
   return { spec, file: r.file }
 }
 
-/** Fail early, with the reason, on the mistakes a hand-written or agent-written spec usually has. */
-export function validateSpec(spec: ReelSpec, file: string) {
+const FORMATS = Object.keys(FORMAT_SIZE) as Format[]
+const SCREEN_KINDS = ['list', 'table', 'form', 'phone', 'stat']
+const LAUNCH_KINDS = ['hook', 'screen', 'payoff', 'logo']
+const ICONS = new Set<string>(ICON_NAMES)
+const list = (xs: readonly string[]) => xs.join(', ')
+
+/**
+ * Fail early, with the reason, on the mistakes a hand-written or agent-written spec usually has. Each style has its own
+ * required fields; with the brand, also the closing copy the style needs (brand.outro for recorded, a CTA for the others).
+ */
+export function validateSpec(spec: VideoSpec, file: string, brand?: Brand) {
   const where = path.basename(file)
-  if (!spec.id) throw new Error(`${where}: "id" is required`)
-  if (!spec.voice?.use) throw new Error(`${where}: voice.use is required (e.g. "af_heart" or "chatterbox")`)
-  const ids = new Set(spec.lines.map((l) => l.id))
-  for (const s of spec.scenes) {
-    const ls = (s as { lines?: { id: string }[] }).lines ?? []
-    for (const l of ls) if (!ids.has(l.id)) throw new Error(`${where}: scene "${s.id}" uses line "${l.id}", which is not in "lines"`)
+  const fail = (msg: string): never => {
+    throw new Error(`${where}: ${msg}`)
   }
-  for (const l of spec.lines) if (/…|\.\.\./.test(l.say)) process.stderr.write(`note: ${where} line "${l.id}" has an ellipsis; TTS often pauses oddly there. Use "|" for a breath instead.\n`)
+  if (!spec.id) fail('"id" is required')
+  const style = styleOf(spec)
+  if (!STYLES.includes(style)) fail(`"style" must be one of ${list(STYLES)} (got "${style}")`)
+  if (spec.formats !== undefined) {
+    if (!Array.isArray(spec.formats) || spec.formats.length === 0) fail(`"formats" must be a non-empty list of ${list(FORMATS)}`)
+    for (const f of spec.formats) if (!FORMATS.includes(f)) fail(`format "${f}" is not one of ${list(FORMATS)}`)
+    const vertical: Style[] = ['recorded', 'walk']
+    if (vertical.includes(style) && formatsOf(spec).some((f) => f !== '9x16')) fail(`a ${style} reel renders in 9x16 only; only launch films take 16x9 and 1x1`)
+  }
+  if (spec.style === 'walk') validateWalk(spec, where, fail, brand)
+  else if (spec.style === 'launch') validateLaunch(spec, where, fail, brand)
+  else validateRecorded(spec, where, fail, brand)
 }
 
-/** The spec with its brand merged in and project-relative media staged into public/, ready to be Remotion's props. */
+type Fail = (msg: string) => never
+
+/** The script: ids unique, every line says something; an ellipsis gets a note (TTS pauses oddly there). */
+function checkLines(lines: LineSpec[] | undefined, where: string, fail: Fail): Set<string> {
+  if (!Array.isArray(lines)) return fail('"lines" is required: the script, [{ "id", "say" }, …]')
+  const ids = new Set<string>()
+  for (const l of lines) {
+    if (!l?.id || typeof l.say !== 'string') fail('every line needs an "id" and a "say"')
+    if (ids.has(l.id)) fail(`line "${l.id}" is defined twice`)
+    ids.add(l.id)
+  }
+  for (const l of lines) if (/…|\.\.\./.test(l.say)) process.stderr.write(`note: ${where} line "${l.id}" has an ellipsis; TTS often pauses oddly there. Use "|" for a breath instead.\n`)
+  return ids
+}
+
+function validateRecorded(spec: ReelSpec, where: string, fail: Fail, brand?: Brand) {
+  if (!spec.voice?.use) fail('voice.use is required (e.g. "af_heart" or "chatterbox")')
+  if (!Array.isArray(spec.scenes)) fail('"scenes" is required: [{ "id", "type": "hook" | "quiz" | "phone" | … }, …]')
+  const ids = new Set((spec.lines ?? []).map((l) => l.id))
+  for (const s of spec.scenes) {
+    const ls = (s as { lines?: { id: string }[] }).lines ?? []
+    for (const l of ls) if (!ids.has(l.id)) fail(`scene "${s.id}" uses line "${l.id}", which is not in "lines"`)
+  }
+  for (const l of spec.lines ?? []) if (/…|\.\.\./.test(l.say)) process.stderr.write(`note: ${where} line "${l.id}" has an ellipsis; TTS often pauses oddly there. Use "|" for a breath instead.\n`)
+  if (brand && !brand.outro) throw new Error('brand.json: outro { title, cta, lines } is required for recorded reels')
+}
+
+function checkIcon(icon: unknown, what: string, fail: Fail) {
+  if (typeof icon !== 'string' || !ICONS.has(icon)) fail(`${what}: icon "${String(icon)}" is not one of the bundled icons (src/reel/icons.tsx)`)
+}
+
+/** A screen-kit screen: a known kind and the fields that kind draws. */
+function checkScreen(screen: ScreenSpec | undefined, what: string, fail: Fail, inPhone = false) {
+  if (!screen || typeof screen !== 'object') return fail(`${what} needs a "screen": { "kind": ${SCREEN_KINDS.map((k) => `"${k}"`).join(' | ')}, … }`)
+  if (!SCREEN_KINDS.includes(screen.kind)) fail(`${what}: screen kind "${screen.kind}" is not one of ${list(SCREEN_KINDS)}`)
+  if (screen.kind !== 'phone' && screen.icon !== undefined) checkIcon(screen.icon, what, fail)
+  switch (screen.kind) {
+    case 'list':
+      if (!Array.isArray(screen.rows) || screen.rows.length === 0) fail(`${what}: a list screen needs "rows": [{ "title" }, …]`)
+      for (const r of screen.rows) {
+        if (!r?.title) fail(`${what}: every list row needs a "title"`)
+        if (r.icon !== undefined) checkIcon(r.icon, what, fail)
+      }
+      break
+    case 'table': {
+      const n = Array.isArray(screen.columns) ? screen.columns.length : 0
+      if (n === 0) fail(`${what}: a table screen needs "columns": ["…", …]`)
+      if (!Array.isArray(screen.rows) || screen.rows.length === 0) fail(`${what}: a table screen needs "rows": [["…", …], …]`)
+      for (const r of screen.rows) if (!Array.isArray(r) || r.length !== n) fail(`${what}: every table row needs ${n} cells, one per column`)
+      const c = screen.compare?.columns
+      if (screen.compare && (!Array.isArray(c) || c.length !== 2 || c.some((i) => !Number.isInteger(i) || i < 0 || i >= n))) fail(`${what}: compare.columns must be two column indexes (0–${n - 1})`)
+      break
+    }
+    case 'form':
+      if (!screen.fields?.length && !screen.items?.length) fail(`${what}: a form screen needs "fields" or "items"`)
+      break
+    case 'stat':
+      if (!Number.isInteger(screen.value) || !screen.label) fail(`${what}: a stat screen needs a whole-number "value" and a "label"`)
+      break
+    case 'phone':
+      if (inPhone) fail(`${what}: a phone screen cannot wrap another phone`)
+      checkScreen(screen.screen, `${what} (inside the phone)`, fail, true)
+      if (screen.action?.icon !== undefined) checkIcon(screen.action.icon, what, fail)
+      for (const t of screen.tabs ?? []) checkIcon(t.icon, what, fail)
+      break
+  }
+}
+
+function checkAnchors(anchors: Record<string, Anchor> | undefined, what: string, lines: Set<string>, scenes: Set<string>, fail: Fail) {
+  for (const [name, a] of Object.entries(anchors ?? {})) {
+    if (!a || typeof a !== 'object') fail(`${what}: anchor "${name}" must be { "line", "word", "offsetMs" } or { "scene", "offsetMs" }`)
+    if ('scene' in a) {
+      if (!scenes.has(a.scene)) fail(`${what}: anchor "${name}" points at scene "${a.scene}", which is not one of ${list([...scenes])}`)
+    } else if (a.line !== undefined && !lines.has(a.line)) fail(`${what}: anchor "${name}" uses line "${a.line}", which is not in "lines"`)
+  }
+}
+
+function validateWalk(spec: WalkSpec, where: string, fail: Fail, brand?: Brand) {
+  if (!spec.voice?.use) fail('voice.use is required (e.g. "af_heart" or "chatterbox")')
+  const lineIds = checkLines(spec.lines, where, fail)
+  if (!Array.isArray(spec.steps) || spec.steps.length === 0) fail('a walk needs "steps": [{ "id", "label", "icon", "screen" }, …]')
+  const stepIds = new Set<string>()
+  for (const s of spec.steps) {
+    if (!s?.id) fail('every step needs an "id"')
+    if (s.id === 'hook' || s.id === 'logo') fail(`step id "${s.id}" is taken by the walk's own ${s.id} scene; rename the step`)
+    if (stepIds.has(s.id)) fail(`step "${s.id}" is defined twice`)
+    stepIds.add(s.id)
+    if (!s.label) fail(`step "${s.id}" needs a "label" (the tracker shows it)`)
+    checkIcon(s.icon, `step "${s.id}"`, fail)
+    checkScreen(s.screen, `step "${s.id}"`, fail)
+  }
+  const sceneIds = new Set(['hook', ...stepIds, 'logo'])
+  for (const s of spec.steps) checkAnchors(s.anchors, `step "${s.id}"`, lineIds, sceneIds, fail)
+  const cuts = cutsOf(spec)
+  if (cuts.length === 0) fail('a walk needs "cuts": { "long": { "steps": [{ "step", "lines" }, …], "logo": { "lines" } } }')
+  const usesLines = (lines: string[] | undefined, what: string) => {
+    if (!Array.isArray(lines) || lines.length === 0) fail(`${what} needs "lines": ["<line id>", …]`)
+    for (const l of lines!) if (!lineIds.has(l)) fail(`${what} uses line "${l}", which is not in "lines"`)
+  }
+  for (const name of cuts) {
+    const cut = spec.cuts[name]
+    const what = `cut "${name}"`
+    if (cut.hook) {
+      if (!spec.hook?.headline) fail(`${what} has a hook scene, but the spec has no "hook": { "headline" }`)
+      usesLines(cut.hook.lines, `${what}'s hook`)
+    }
+    if (!Array.isArray(cut.steps) || cut.steps.length === 0) fail(`${what} needs "steps": [{ "step": "<step id>", "lines": [...] }, …]`)
+    const seen = new Set<string>()
+    for (const cs of cut.steps) {
+      if (!stepIds.has(cs.step)) fail(`${what} shows step "${cs.step}", which is not in "steps"`)
+      if (seen.has(cs.step)) fail(`${what} shows step "${cs.step}" twice`)
+      seen.add(cs.step)
+      usesLines(cs.lines, `${what}'s step "${cs.step}"`)
+      checkAnchors(cs.anchors, `${what}'s step "${cs.step}"`, lineIds, sceneIds, fail)
+    }
+    if (!cut.logo) fail(`${what} needs a "logo": { "lines": [...] } (the close)`)
+    usesLines(cut.logo.lines, `${what}'s logo`)
+    checkAnchors(cut.logo.anchors, `${what}'s logo`, lineIds, sceneIds, fail)
+    for (const sc of cut.hideCaptionsIn ?? []) if (!sceneIds.has(sc)) fail(`${what}: hideCaptionsIn has "${sc}", which is not one of ${list([...sceneIds])}`)
+  }
+  if (brand && !(spec.close?.cta ?? brand.outro?.cta)) fail('the close needs a call to action: set close.cta (or brand.json outro.cta)')
+}
+
+function validateLaunch(spec: LaunchSpec, where: string, fail: Fail, brand?: Brand) {
+  const extra = spec as { voice?: unknown; lines?: unknown }
+  if (extra.voice !== undefined || extra.lines !== undefined) process.stderr.write(`note: ${where} is a launch film (music only): its "voice" and "lines" are not used.\n`)
+  if (spec.music?.bpm !== undefined && !(spec.music.bpm > 0)) fail('music.bpm must be a positive number')
+  if (!Array.isArray(spec.scenes) || spec.scenes.length === 0) fail(`a launch film needs "scenes": [{ "id", "kind": ${LAUNCH_KINDS.map((k) => `"${k}"`).join(' | ')}, "seconds" }, …]`)
+  const ids = new Set<string>()
+  for (const s of spec.scenes) {
+    if (!s?.id) fail('every scene needs an "id"')
+    if (ids.has(s.id)) fail(`scene "${s.id}" is defined twice`)
+    ids.add(s.id)
+    const what = `scene "${s.id}"`
+    if (!LAUNCH_KINDS.includes(s.kind)) fail(`${what}: kind "${s.kind}" is not one of ${list(LAUNCH_KINDS)}`)
+    if (typeof s.seconds !== 'number' || !(s.seconds > 0)) fail(`${what} needs "seconds" (how long it runs, > 0)`)
+    switch (s.kind) {
+      case 'hook':
+        if (!Array.isArray(s.headline) || s.headline.length === 0 || s.headline.some((h) => !h?.text)) fail(`${what}: a hook needs "headline": [{ "text" }, …]`)
+        break
+      case 'screen':
+        checkScreen(s.screen, what, fail)
+        break
+      case 'payoff':
+        if (!Array.isArray(s.cards) || s.cards.length === 0 || s.cards.some((c) => !c?.title)) fail(`${what}: a payoff needs "cards": [{ "title" }, …]`)
+        for (const c of s.cards) if (c.icon !== undefined) checkIcon(c.icon, what, fail)
+        break
+      case 'logo':
+        if (brand && !(s.cta ?? brand.outro?.cta)) fail(`${what} needs a call to action: set "cta" (or brand.json outro.cta)`)
+        break
+    }
+  }
+}
+
+/** The spec with its brand merged in and project-relative media staged into public/, ready to be the Reel's props. */
 export function buildProps(p: Project, spec: ReelSpec): Resolved {
   const r = resolveSpec(spec, p.brand)
   r.scenes = r.scenes.map((s) => {
@@ -98,6 +268,47 @@ function stage(p: Project, src: string): string {
   return rel
 }
 
+/** The Remotion composition each style renders with. */
+export const COMPOSITION = { recorded: 'Reel', walk: 'Walk', launch: 'Launch' } as const satisfies Record<Style, string>
+
+/** A video's file name under out/, without .mp4: <id>, then -<cut> (walks with several cuts), then -16x9 / -1x1. */
+export const outputName = (id: string, format: Format, cut?: string) => [id, cut, format === '9x16' ? undefined : format].filter(Boolean).join('-')
+
+/** One video to render: a spec in one format (and, for a walk, one cut), with the props its composition gets. */
+export type RenderJob = {
+  style: Style
+  composition: (typeof COMPOSITION)[Style]
+  format: Format
+  cut?: string
+  width: number
+  height: number
+  /** out/<name>.mp4, and the manifest entry's id. */
+  name: string
+  props: Resolved | ResolvedWalk | ResolvedLaunch
+}
+
+/** Every video a spec makes: a recorded reel → one; a walk → one per cut; a launch film → one per format. */
+export function renderJobs(p: Project, spec: VideoSpec): RenderJob[] {
+  const formats = formatsOf(spec)
+  if (spec.style === 'walk') {
+    const cuts = cutsOf(spec)
+    return cuts.flatMap((cut) =>
+      formats.map((format) => {
+        const props = resolveWalk(spec, p.brand, cut, format)
+        return { style: 'walk' as const, composition: COMPOSITION.walk, format, cut, width: props.width, height: props.height, name: outputName(spec.id, format, cuts.length > 1 ? cut : undefined), props }
+      }),
+    )
+  }
+  if (spec.style === 'launch') {
+    return formats.map((format) => {
+      const props = resolveLaunch(spec, p.brand, format)
+      return { style: 'launch' as const, composition: COMPOSITION.launch, format, width: props.width, height: props.height, name: outputName(spec.id, format), props }
+    })
+  }
+  const props = buildProps(p, spec)
+  return [{ style: 'recorded', composition: COMPOSITION.recorded, format: '9x16', width: props.width, height: props.height, name: outputName(spec.id, '9x16'), props }]
+}
+
 /** The kit's shared files every project's public/ needs (the tap sound). */
 export function ensurePublic(p: Project) {
   const sfx = path.join(p.publicDir, 'sfx', 'tap.wav')
@@ -108,8 +319,9 @@ export function ensurePublic(p: Project) {
 }
 
 /** The folders under public/ whose recordings a reel's phone scenes use. */
-export function clipsDirsOf(spec: ReelSpec): string[] {
-  return [...new Set(spec.scenes.filter((s) => s.type === 'phone').map((s) => (s as PhoneScene).clipsDir))]
+export function clipsDirsOf(spec: VideoSpec): string[] {
+  if (styleOf(spec) !== 'recorded') return []
+  return [...new Set((spec as ReelSpec).scenes.filter((s) => s.type === 'phone').map((s) => (s as PhoneScene).clipsDir))]
 }
 
 export const rel = (p: Project, abs: string) => path.relative(p.dir, abs).split(path.sep).join('/')

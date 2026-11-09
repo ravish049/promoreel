@@ -3,7 +3,8 @@
 // in public/vo/<reel>/<voice>/, and lines.json with their durations. Unchanged lines are not rendered again.
 // The durations time the video: talking scenes stretch to their lines, phone lines sit on their recorded events.
 // Also writes out/voices/<reel>-<voice>.wav (the whole voice-over on the video's own timeline, to listen to) and
-// out/<reel>.timeline.json (where every line lands, plus any overlap warnings).
+// out/<reel>.timeline.json (where every line lands, plus any overlap warnings). A walk's lines are voiced the same way;
+// its timeline belongs to the walk composition, so it gets no listening sample here. A launch film has no voice.
 import fs from 'node:fs'
 import path from 'node:path'
 import { buildTimeline, type ClipManifest } from '../../src/reel/timeline'
@@ -34,10 +35,11 @@ export async function voice(projectDir: string, opts: { reel?: string; voices?: 
   const st = step('voice')
   const p = loadProject(projectDir)
   const { spec } = pickReel(p, opts.reel)
-  const r = resolveSpec(spec, p.brand)
+  if (spec.style === 'launch') throw new Error(`${spec.id} is a launch film: it has music and no voice, so there is nothing to voice`)
+  const r = spec.style === 'walk' ? spec : resolveSpec(spec, p.brand)
   const voices = opts.voices?.length ? opts.voices : [...new Set([r.voice.use, ...(r.voice.render ?? [])])]
   st.start(`${r.lines.length} lines × ${voices.length} voice(s): ${voices.join(', ')}`)
-  const manifests = loadManifests(p.publicDir, r.scenes)
+  const manifests = r.style === 'walk' ? {} : loadManifests(p.publicDir, r.scenes)
   const results: Record<string, unknown> = {}
 
   for (const [vi, name] of voices.entries()) {
@@ -67,6 +69,11 @@ export async function voice(projectDir: string, opts: { reel?: string; voices?: 
       }
     } else st.log(`${name}: all ${r.lines.length} lines unchanged`)
     fs.writeFileSync(linesPath, JSON.stringify(next, null, 2) + '\n')
+    if (r.style === 'walk') {
+      const ms = Object.values(next.lines).reduce((a, x) => a + x.durationMs, 0)
+      results[name] = { spokenSec: +(ms / 1000).toFixed(2) }
+      continue
+    }
 
     // the listening sample, on the video's own timeline
     const durations = Object.fromEntries(Object.entries(next.lines).map(([k, x]) => [k, x.durationMs]))
