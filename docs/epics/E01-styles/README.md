@@ -35,6 +35,7 @@ primitives (list, table, form, phone, stat) so anyone can describe their own scr
 | 01.9 | Launch examples | 01.7 |
 | 01.10 | Docs, skill and `init --style` | 01.3 |
 | 01.11 | Bigger phone screens, walk warnings everywhere (added after batch 4 review) | 01.6, 01.8 |
+| 01.12 | Final review fixes: docs, agent checklist, small edge cases (added after the final review) | 01.10 |
 
 ## Batch plan
 No two stories in one batch touch the same file. Each worker builds its story in its own worktree off
@@ -47,7 +48,7 @@ No two stories in one batch touch the same file. Each worker builds its story in
 | 3 | 01.6 | Walk composition registers in `src/Root.tsx` |
 | 4 | 01.7 · 01.8 | Launch registers in `src/Root.tsx`; walk examples touch only `examples/` |
 | 5 | 01.11 · 01.10 | Phone size + re-render walk examples; docs, README, skill and `init` |
-| 6 | 01.9 | Launch examples (writes `examples/crewdash/out/manifest.json`, which 01.11 also writes) |
+| 6 | 01.9 · 01.12 | Launch examples (writes `examples/crewdash/out/manifest.json`, which 01.11 also writes); final review fixes |
 
 ## Gate after every batch
 - `npm run lint` and `npm test` pass.
