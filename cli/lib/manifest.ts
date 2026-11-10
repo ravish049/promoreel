@@ -1,8 +1,8 @@
 // out/manifest.json: every finished video of a project, newest first. The web studio's gallery (docs/studio-plan.md)
 // reads only this file: no scanning, no guessing.
 //
-// { "project": "generic", "updated": "…", "videos": [ { "id", "title", "path", "sheet", "durationSec", "width", "height",
-//   "sizeBytes", "voice", "created", "spec", "format", "cut" } ] }   — paths are relative to the project folder.
+// { "project": "generic", "updated": "…", "videos": [ { "id", "title", "path", "sheet", "still", "durationSec", "width",
+//   "height", "sizeBytes", "voice", "created", "spec", "format", "cut" } ] }   — paths are relative to the project folder.
 // Each rendered file is its own entry: a launch film in three formats is three entries (ids launch, launch-16x9, …).
 import fs from 'node:fs'
 import path from 'node:path'
@@ -14,6 +14,8 @@ export type VideoEntry = {
   title: string
   path: string
   sheet?: string
+  /** A still image of one frame (out/<name>.png); replace ads have one. */
+  still?: string
   durationSec: number
   width: number
   height: number

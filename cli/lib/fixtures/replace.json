@@ -1,0 +1,23 @@
+{
+  "id": "ad",
+  "style": "replace",
+  "formats": ["9x16", "4x5", "1x1"],
+  "seconds": 12,
+  "headline": "Replace all your\nteam tools",
+  "tools": [
+    { "icon": "spreadsheet", "label": "Sheets" },
+    { "icon": "chat", "label": "Chat" },
+    { "icon": "calendar", "label": "Calendar" },
+    { "image": "tools/clipboard.png", "label": "Paper forms" }
+  ],
+  "scribble": { "seed": 7 },
+  "screen": {
+    "kind": "pitch",
+    "eyebrow": "For small teams",
+    "title": "One app for the whole crew",
+    "body": "Schedules, timesheets and messages in one place.",
+    "buttons": [{ "label": "Start free" }, { "label": "See how it works", "style": "secondary" }],
+    "footnote": "acme.dev"
+  },
+  "music": { "bpm": 112 }
+}

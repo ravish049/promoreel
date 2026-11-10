@@ -49,6 +49,7 @@ export async function voice(projectDir: string, opts: { reel?: string; voices?: 
   const p = loadProject(projectDir)
   const { spec } = pickReel(p, opts.reel)
   if (spec.style === 'launch') throw new Error(`${spec.id} is a launch film: it has music and no voice, so there is nothing to voice`)
+  if (spec.style === 'replace') throw new Error(`${spec.id} is a replace ad: it has music and no voice, so there is nothing to voice`)
   const r = spec.style === 'walk' ? spec : resolveSpec(spec, p.brand)
   const voices = opts.voices?.length ? opts.voices : [...new Set([r.voice.use, ...(r.voice.render ?? [])])]
   st.start(`${r.lines.length} lines × ${voices.length} voice(s): ${voices.join(', ')}`)

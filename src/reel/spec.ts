@@ -1,6 +1,6 @@
 // The shape of a reel spec (<project>/reels/<id>.json) and of a project's brand (<project>/brand.json).
-// One spec = one video in one style (recorded, walk or launch), rendered in one or more formats. The CLI merges the
-// brand into the spec and hands both to Remotion as props.
+// One spec = one video in one style (recorded, walk, launch or replace), rendered in one or more formats. The CLI
+// merges the brand into the spec and hands both to Remotion as props.
 import type { IconName } from './icons'
 
 // ── voice lines ─────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -211,12 +211,13 @@ export type CardStyle = 'solid' | 'glass'
  * What kind of video a spec makes:
  * - recorded: phone recordings of your app, zooms, captions (the default);
  * - walk: a voiced feature walk over drawn screens, one step at a time;
- * - launch: a music-only launch film with a kinetic headline, drawn screens and a logo close.
+ * - launch: a music-only launch film with a kinetic headline, drawn screens and a logo close;
+ * - replace: a short ad: a headline, the tools a customer uses today scribbled out, and a phone with the app's pitch.
  */
-export type Style = 'recorded' | 'walk' | 'launch'
+export type Style = 'recorded' | 'walk' | 'launch' | 'replace'
 
-/** The canvas: 9x16 = 1080×1920, 16x9 = 1920×1080, 1x1 = 1080×1080. */
-export type Format = '9x16' | '16x9' | '1x1'
+/** The canvas: 9x16 = 1080×1920, 16x9 = 1920×1080, 1x1 = 1080×1080, 4x5 = 1080×1350 (replace only). */
+export type Format = '9x16' | '16x9' | '1x1' | '4x5'
 
 /** The music bed: synthesised on the bpm grid, or your own track (`src`, in public/) ducked under the voice. */
 export type MusicSpec = {
@@ -415,6 +416,20 @@ export type StatScreen = ScreenHeading & {
   label: string
 }
 
+/**
+ * The app's pitch, shown on the replace ad's phone (only the replace style draws it): a small eyebrow, a title, a line
+ * of body text, one or two call-to-action buttons and a footnote.
+ */
+export type PitchScreen = {
+  kind: 'pitch'
+  eyebrow?: string
+  title: string
+  body?: string
+  /** One or two buttons; the first is primary unless it says otherwise. */
+  buttons: { label: string; style?: 'primary' | 'secondary' }[]
+  footnote?: string
+}
+
 /** The screens a phone frame can wrap. */
 export type InnerScreen = ListScreen | TableScreen | FormScreen | StatScreen
 
@@ -557,12 +572,65 @@ export type LaunchSpec = SpecBase & {
   scenes: LaunchScene[]
 }
 
+// ── the replace style ───────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The generic tool icons the kit draws (no third-party logos). */
+export type ToolIconName = 'spreadsheet' | 'chat' | 'phone' | 'email' | 'calendar' | 'calculator' | 'clipboard' | 'notes' | 'folder'
+
+/** One tool the customer uses today: a drawn icon, or your own image (a path under public/), with an optional label. */
+export type ToolSpec = { icon?: ToolIconName; image?: string; label?: string; color?: string }
+
+/** The formats a replace ad renders in. */
+export type ReplaceFormat = '9x16' | '4x5' | '1x1'
+
+/**
+ * A replace ad: a headline, a row of the tools a customer uses today crossed out with a scribble, then a phone showing the
+ * app. Music and sound effects, no voice. The close's call to action is brand.json outro.cta.
+ */
+export type ReplaceSpec = Omit<SpecBase, 'formats'> & {
+  style: 'replace'
+  /** Default ["9x16"]. Each one is its own video and still: out/<id>.mp4, out/<id>-4x5.mp4, out/<id>-1x1.mp4 (+ .png). */
+  formats?: ReplaceFormat[]
+  /** How long the ad runs, 8–20 s (default 12). */
+  seconds?: number
+  /** The moment the still (out/<name>.png) is taken, seconds (default the last frame). */
+  stillAt?: number
+  /** One or two lines on screen. */
+  headline: string
+  /** 2–8 tools. */
+  tools: ToolSpec[]
+  scribble?: { color?: string; seed?: number }
+  /** What the phone shows: a list, table, form, stat or pitch screen. */
+  screen: InnerScreen | PitchScreen
+  /** A photo (or a tripod clip) with a phone in it; the app's screen is placed onto that phone. */
+  background?: {
+    /** Exactly one of image / video, a path under public/. */
+    image?: string
+    video?: string
+    /** The phone screen's corners in the source's own pixels: top-left, top-right, bottom-right, bottom-left. */
+    screen: [[number, number], [number, number], [number, number], [number, number]]
+    /** How much to darken the photo, 0–0.6 (default 0.25). */
+    dim?: number
+  }
+  music?: { bpm?: number; src?: string }
+}
+
 // ── any spec, and what each composition receives ────────────────────────────────────────────────────────────────────────
 
-export type VideoSpec = ReelSpec | WalkSpec | LaunchSpec
+export type VideoSpec = ReelSpec | WalkSpec | LaunchSpec | ReplaceSpec
 
 /** The Walk composition's props: one cut of a walk spec, with its brand. */
 export type WalkInput = WalkSpec & { brand: Brand; cut: string; format: Format }
 
 /** The Launch composition's props: a launch spec in one format, with its brand. */
 export type LaunchInput = LaunchSpec & { brand: Brand; format: Format }
+
+/**
+ * The Replace composition's props: a replace spec in one format, with its brand. With a background, `background.size` is
+ * the source's width and height in px (the CLI reads it with ffprobe), the space `background.screen` is measured in.
+ */
+export type ReplaceInput = Omit<ReplaceSpec, 'background'> & {
+  brand: Brand
+  format: ReplaceFormat
+  background?: NonNullable<ReplaceSpec['background']> & { size: { width: number; height: number } }
+}

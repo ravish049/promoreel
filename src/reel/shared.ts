@@ -1,8 +1,9 @@
 // What every reel of a project shares, folded into a spec before anything reads it: the outro's own voice lines (from
 // brand.json), so a spec's `end` scene needs no lines of its own; and the defaults (30 fps, 1080×1920). The video, the
 // voice step and the captions step all read specs through resolveSpec, so they agree on every line.
-// Walk and launch specs go through resolveWalk / resolveLaunch: the same defaults, plus the cut and the format.
-import type { Brand, EndScene, Format, LaunchInput, LaunchSpec, ReelInput, ReelSpec, Style, VideoSpec, WalkInput, WalkSpec } from './spec'
+// Walk, launch and replace specs go through resolveWalk / resolveLaunch / resolveReplace: the same defaults, plus the
+// cut and the format.
+import type { Brand, EndScene, Format, LaunchInput, LaunchSpec, ReelInput, ReelSpec, ReplaceFormat, ReplaceInput, ReplaceSpec, Style, ToolIconName, VideoSpec, WalkInput, WalkSpec } from './spec'
 
 export const OUTRO_GAP_MS = 900
 export const OUTRO_TAIL_MS = 1000
@@ -27,13 +28,22 @@ export function resolveSpec(spec: ReelSpec, brand: Brand): Resolved {
   return { ...spec, fps: spec.fps ?? 30, width: spec.width ?? 1080, height: spec.height ?? 1920, brand, lines, scenes }
 }
 
-export const STYLES: Style[] = ['recorded', 'walk', 'launch']
+export const STYLES: Style[] = ['recorded', 'walk', 'launch', 'replace']
 
 /** Each format's canvas, px. */
 export const FORMAT_SIZE: Record<Format, { width: number; height: number }> = {
   '9x16': { width: 1080, height: 1920 },
   '16x9': { width: 1920, height: 1080 },
   '1x1': { width: 1080, height: 1080 },
+  '4x5': { width: 1080, height: 1350 },
+}
+
+/** The formats each style can render in (the first is the default). */
+export const STYLE_FORMATS: Record<Style, Format[]> = {
+  recorded: ['9x16'],
+  walk: ['9x16'],
+  launch: ['9x16', '16x9', '1x1'],
+  replace: ['9x16', '4x5', '1x1'],
 }
 
 export const styleOf = (spec: VideoSpec): Style => spec.style ?? 'recorded'
@@ -49,6 +59,7 @@ export const MOTION_FPS = 60
 
 export type ResolvedWalk = WalkInput & { fps: number; width: number; height: number }
 export type ResolvedLaunch = LaunchInput & { fps: number; width: number; height: number }
+export type ResolvedReplace = ReplaceInput & { fps: number; width: number; height: number }
 
 /** One cut of a walk spec as the Walk composition's props (default: the first cut, the first format). */
 export function resolveWalk(spec: WalkSpec, brand: Brand, cut = cutsOf(spec)[0], format = formatsOf(spec)[0]): ResolvedWalk {
@@ -58,6 +69,33 @@ export function resolveWalk(spec: WalkSpec, brand: Brand, cut = cutsOf(spec)[0],
 /** A launch spec in one format as the Launch composition's props (default: its first format). */
 export function resolveLaunch(spec: LaunchSpec, brand: Brand, format = formatsOf(spec)[0]): ResolvedLaunch {
   return { ...spec, fps: spec.fps ?? MOTION_FPS, ...FORMAT_SIZE[format], brand, format }
+}
+
+/** The generic tool icons a replace ad can draw. */
+export const TOOL_ICONS: readonly ToolIconName[] = ['spreadsheet', 'chat', 'phone', 'email', 'calendar', 'calculator', 'clipboard', 'notes', 'folder']
+
+/** A replace ad's length when the spec doesn't set one, and the range it may set. */
+export const REPLACE_SECONDS = 12
+export const REPLACE_SECONDS_RANGE = [8, 20] as const
+/** How much a background photo is darkened by default, and the most it may be. */
+export const REPLACE_DIM = 0.25
+export const REPLACE_DIM_MAX = 0.6
+
+/**
+ * A replace spec in one format as the Replace composition's props (default: its first format). A spec with a background
+ * needs `bgSize`, the source's width and height in px (the CLI reads it with ffprobe).
+ */
+export function resolveReplace(spec: ReplaceSpec, brand: Brand, format = formatsOf(spec)[0] as ReplaceFormat, bgSize?: { width: number; height: number }): ResolvedReplace {
+  const { background, ...rest } = spec
+  if (background && !bgSize) throw new Error(`${spec.id}: the background's size is needed (its width and height in px)`)
+  return {
+    ...rest,
+    fps: spec.fps ?? MOTION_FPS,
+    ...FORMAT_SIZE[format],
+    brand,
+    format,
+    ...(background && bgSize ? { background: { ...background, size: { width: bgSize.width, height: bgSize.height } } } : {}),
+  }
 }
 
 /** A line's words for the captions: its `text`, else what it says, without the breath marks. */

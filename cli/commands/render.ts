@@ -1,13 +1,14 @@
 // promoreel render <project> [--reel id] [--crf 18] [--no-sheet]
-// Bundles the template once, then renders every video the spec makes with its style's composition (Reel, Walk or
-// Launch): one per format (out/<id>.mp4 for 9:16, out/<id>-16x9.mp4, out/<id>-1x1.mp4) and, for a walk with several
-// cuts, one per cut (out/<id>-<cut>.mp4). Each gets a contact sheet (8 frames) and its own entry in out/manifest.json.
+// Bundles the template once, then renders every video the spec makes with its style's composition (Reel, Walk, Launch
+// or Replace): one per format (out/<id>.mp4 for 9:16, out/<id>-16x9.mp4, out/<id>-1x1.mp4, out/<id>-4x5.mp4) and, for a
+// walk with several cuts, one per cut (out/<id>-<cut>.mp4). Each gets a contact sheet (8 frames) and its own entry in
+// out/manifest.json. A replace ad also gets a still image of one frame (out/<name>.png, by default the last frame).
 // A style can run steps before and after each video (RENDER_HOOKS: e.g. build the music bed first, master the sound
 // after). Progress comes from Remotion's own render callback.
 import fs from 'node:fs'
 import path from 'node:path'
 import { bundle } from '@remotion/bundler'
-import { renderMedia, selectComposition } from '@remotion/renderer'
+import { renderMedia, renderStill, selectComposition } from '@remotion/renderer'
 import type { LaunchSpec, Style, VideoSpec, WalkSpec } from '../../src/reel/spec'
 import { voiceDir, type ResolvedLaunch, type ResolvedWalk } from '../../src/reel/shared'
 import { buildWalkTimeline, type WalkWords } from '../../src/walk/timeline'
@@ -18,7 +19,7 @@ import { LAUNCH_SFX_DIR, launchAudioJob, launchBedFile } from '../../src/launch/
 import { writeBed } from '../audio/synth'
 import { writeLaunchSfx } from '../audio/sfx'
 import { masterMp4 } from '../audio/master'
-import { KIT, ensurePublic, loadProject, pickReel, readJson, rel, renderJobs, type Project, type RenderJob } from '../lib/project'
+import { KIT, ensurePublic, loadProject, pickReel, readJson, rel, renderJobs, stillFile, stillFrame, type Project, type RenderJob } from '../lib/project'
 import { step } from '../lib/progress'
 import { upsertVideo, type VideoEntry } from '../lib/manifest'
 import { probeDuration, probeSize } from '../lib/sh'
@@ -37,6 +38,7 @@ export const RENDER_HOOKS: Record<Style, { beforeRender: RenderHook[]; afterRend
   recorded: { beforeRender: [], afterRender: [] },
   walk: { beforeRender: [writeWalkBed], afterRender: [masterInPlace] },
   launch: { beforeRender: [writeLaunchAudio], afterRender: [masterInPlace] },
+  replace: { beforeRender: [], afterRender: [] },
 }
 
 /**
@@ -153,6 +155,14 @@ export async function render(projectDir: string, opts: { reel?: string; crf?: nu
       },
     })
     for (const h of hooks.afterRender) await h(ctx)
+    let stillRel: string | undefined
+    if (job.still) {
+      const stillPath = stillFile(out)
+      const frame = stillFrame(job.still.at, composition.fps, composition.durationInFrames)
+      await renderStill({ composition, serveUrl, output: stillPath, frame, inputProps, imageFormat: 'png', overwrite: true, logLevel: 'error' })
+      stillRel = rel(p, stillPath)
+      st.progress(pct(87), `still ${stillRel} (frame ${frame})`)
+    }
     const durationSec = +probeDuration(out).toFixed(2)
     let sheetRel: string | undefined
     if (opts.sheet !== false) {
@@ -168,6 +178,7 @@ export async function render(projectDir: string, opts: { reel?: string; crf?: nu
       title: spec.title ?? spec.id,
       path: rel(p, out),
       ...(sheetRel ? { sheet: sheetRel } : {}),
+      ...(stillRel ? { still: stillRel } : {}),
       durationSec,
       width,
       height,
