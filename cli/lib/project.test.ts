@@ -4,8 +4,10 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
-import type { Brand, LaunchSpec, VideoSpec, WalkSpec } from '../../src/reel/spec'
-import { buildProps, loadProject, outputName, pickReel, renderJobs, validateSpec, type Project } from './project'
+import type { Brand, LaunchSpec, ReplaceSpec, VideoSpec, WalkSpec } from '../../src/reel/spec'
+import { FORMAT_SIZE, resolveReplace, type ResolvedReplace } from '../../src/reel/shared'
+import { buildProps, loadProject, outputName, outputNames, pickReel, renderJobs, stillFile, stillFrame, validateSpec, type Project } from './project'
+import { releaseFiles } from '../commands/release'
 
 const generic = path.join(__dirname, '..', '..', 'examples', 'generic')
 // captured from the unmodified code (before styles), with buildProps(loadProject(generic), todo-promo)
@@ -52,6 +54,10 @@ const launch = (over: Partial<LaunchSpec> = {}): LaunchSpec => ({
   ],
   ...over,
 })
+
+const replaceFixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'replace.json'), 'utf8')) as ReplaceSpec
+const replace = (over: Partial<ReplaceSpec> = {}): ReplaceSpec => ({ ...structuredClone(replaceFixture), ...over })
+const photo = { image: 'photo.jpg', screen: [[400, 300], [900, 320], [880, 1300], [380, 1280]] as NonNullable<ReplaceSpec['background']>['screen'] }
 
 const rejects = (spec: unknown, re: RegExp, b?: Brand) => assert.throws(() => validateSpec(spec as VideoSpec, 'reels/x.json', b), re)
 
@@ -160,12 +166,15 @@ test('a launch screen or payoff under 1 s fails; under 1.5 s passes with a note;
   validateSpec(launch({ scenes: [...base.scenes.slice(0, 3), { id: 'logo', kind: 'logo', seconds: 5, cta: 'acme.dev', tagline: ['Every sheet, matched.'] }] }), 'launch.json', brand)
 })
 
-test('formats: only launch films go landscape or square; unknown formats are refused', () => {
-  rejects(walk({ formats: ['16x9'] }), /a walk reel renders in 9x16 only/)
+test('formats: only launch films go landscape, only replace ads go 4x5; unknown formats are refused', () => {
+  rejects(walk({ formats: ['16x9'] }), /a walk reel renders in 9x16 only; launch films also take 16x9 and 1x1, replace ads 4x5 and 1x1/)
   rejects({ ...pickReel(loadProject(generic), 'todo-promo').spec, formats: ['1x1'] }, /a recorded reel renders in 9x16 only/)
-  rejects(launch({ formats: ['4x3' as never] }), /format "4x3" is not one of 9x16, 16x9, 1x1/)
+  rejects(walk({ formats: ['4x5'] }), /a walk reel renders in 9x16 only/)
+  rejects(launch({ formats: ['16x9', '4x5'] }), /a launch film renders in 9x16, 16x9 and 1x1 \(got "4x5"; 4x5 is for replace ads only\)/)
+  rejects(replace({ formats: ['9x16', '16x9' as never] }), /a replace ad renders in 9x16, 4x5 and 1x1 \(got "16x9"\)/)
+  rejects(launch({ formats: ['4x3' as never] }), /format "4x3" is not one of 9x16, 16x9, 1x1, 4x5/)
   rejects(launch({ formats: [] }), /"formats" must be a non-empty list/)
-  rejects({ ...launch(), style: 'slideshow' }, /"style" must be one of recorded, walk, launch/)
+  rejects({ ...launch(), style: 'slideshow' }, /"style" must be one of recorded, walk, launch, replace/)
 })
 
 test('brand.outro is required only for recorded reels', () => {
@@ -192,6 +201,149 @@ test('two reels that render to the same file are refused when the project loads'
     fs.writeFileSync(path.join(dir, 'reels', 'a.json'), JSON.stringify(walk({ id: 'promo' })))
     fs.writeFileSync(path.join(dir, 'reels', 'b.json'), JSON.stringify({ id: 'promo-short', voice: { use: 'af_heart' }, lines: [], scenes: [] }))
     assert.throws(() => loadProject(dir), /both render to out\/promo-short\.mp4/)
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+// ── the replace style ───────────────────────────────────────────────────────────────────────────────────────────────────
+
+test('4x5 is a 1080×1350 canvas', () => {
+  assert.deepEqual(FORMAT_SIZE['4x5'], { width: 1080, height: 1350 })
+  assert.equal(outputName('ad', '4x5'), 'ad-4x5')
+})
+
+test('a valid replace ad passes, with or without a background, a stillAt and a list screen', () => {
+  validateSpec(replace(), 'ad.json', withOutro)
+  validateSpec(replace({ formats: undefined, seconds: undefined }), 'ad.json', withOutro)
+  validateSpec(replace({ stillAt: 0 }), 'ad.json', withOutro)
+  validateSpec(replace({ stillAt: 12 }), 'ad.json', withOutro)
+  validateSpec(replace({ seconds: 8, stillAt: 6.5 }), 'ad.json', withOutro)
+  validateSpec(replace({ background: { ...photo, dim: 0.6 } }), 'ad.json', withOutro)
+  validateSpec(replace({ background: { video: 'clip.mp4', screen: photo.screen, dim: 0 } }), 'ad.json', withOutro)
+  validateSpec(replace({ screen: { kind: 'list', title: 'Today', rows: [{ title: 'Site visit', value: '9:00' }] } }), 'ad.json', withOutro)
+  validateSpec(replace({ screen: { kind: 'pitch', title: 'One app', buttons: [{ label: 'Start' }] } }), 'ad.json', withOutro)
+})
+
+test('a replace ad names what is wrong with it', () => {
+  rejects(replace({ headline: undefined as never }), /x\.json: a replace ad needs a "headline"/)
+  rejects(replace({ headline: '  ' }), /a replace ad needs a "headline"/)
+  rejects(replace({ headline: 'One\nTwo\nThree' }), /"headline" takes one or two lines/)
+  rejects(replace({ tools: undefined as never }), /a replace ad needs 2–8 "tools".*\(got none\)/)
+  rejects(replace({ tools: [{ icon: 'chat' }] }), /a replace ad needs 2–8 "tools".*\(got 1\)/)
+  rejects(replace({ tools: Array.from({ length: 9 }, () => ({ icon: 'chat' as const })) }), /needs 2–8 "tools".*\(got 9\)/)
+  rejects(replace({ tools: [{ icon: 'chat' }, { label: 'Paper' }] }), /tool 2 \("Paper"\) needs an "icon" \(one of spreadsheet, chat, phone, email, calendar, calculator, clipboard, notes, folder\) or an "image"/)
+  rejects(replace({ tools: [{ icon: 'chat' }, { icon: 'slack' as never }] }), /tool 2: icon "slack" is not one of spreadsheet, chat/)
+  rejects(replace({ tools: [{ icon: 'chat' }, { icon: 'notes', image: 'x.png' }] }), /tool 2 has both an "icon" and an "image"/)
+  rejects(replace({ screen: undefined as never }), /a replace ad needs a "screen" for its phone/)
+  rejects(replace({ screen: { kind: 'chart' } as never }), /the screen: kind "chart" is not one of list, table, form, stat, pitch/)
+  rejects(replace({ screen: { kind: 'phone', screen: { kind: 'stat', value: 1, label: 'x' } } as never }), /kind "phone" is not one of list, table, form, stat, pitch/)
+  rejects(replace({ screen: { kind: 'table', columns: ['A', 'B'], rows: [['1']] } }), /the screen: every table row needs 2 cells/)
+  rejects(replace({ screen: { kind: 'pitch', title: 'One app', buttons: [] } }), /the pitch screen needs one or two "buttons".*\(got 0\)/)
+  rejects(replace({ screen: { kind: 'pitch', title: 'One app', buttons: [{ label: 'a' }, { label: 'b' }, { label: 'c' }] } }), /one or two "buttons".*\(got 3\)/)
+  rejects(replace({ screen: { kind: 'pitch', title: 'One app' } as never }), /one or two "buttons".*\(got 0\)/)
+  rejects(replace({ screen: { kind: 'pitch', buttons: [{ label: 'a' }] } as never }), /the pitch screen needs a "title"/)
+  rejects(replace({ screen: { kind: 'pitch', title: 'x', buttons: [{ label: 'a', style: 'ghost' as never }] } }), /style "ghost" is not one of primary, secondary/)
+  rejects(replace({ seconds: 7 }), /"seconds" must be 8–20 \(got 7\)/)
+  rejects(replace({ seconds: 21 }), /"seconds" must be 8–20 \(got 21\)/)
+  rejects(replace({ stillAt: 12.5 }), /"stillAt" must be a moment in the video, 0–12 s \(got 12\.5\)/)
+  rejects(replace({ seconds: undefined, stillAt: 13 }), /"stillAt" must be a moment in the video, 0–12 s/)
+  rejects(replace({ stillAt: -1 }), /"stillAt" must be a moment in the video/)
+  rejects(replace({ music: { bpm: 300 } }), /music\.bpm must be 40–240/)
+})
+
+test('a replace background needs one source, four corners and a dim of 0–0.6', () => {
+  rejects(replace({ background: { screen: photo.screen } }), /the background needs exactly one of "image" and "video"/)
+  rejects(replace({ background: { ...photo, video: 'clip.mp4' } }), /the background needs exactly one of "image" and "video"/)
+  rejects(replace({ background: { ...photo, screen: photo.screen.slice(0, 3) as never } }), /background\.screen must be the phone screen's four corners/)
+  rejects(replace({ background: { ...photo, screen: [[0, 0], [1, 0], [1, 1], [0]] as never } }), /background\.screen must be the phone screen's four corners/)
+  rejects(replace({ background: { ...photo, screen: undefined as never } }), /background\.screen must be/)
+  rejects(replace({ background: { ...photo, dim: 0.7 } }), /background\.dim must be 0–0\.6 \(got 0\.7\)/)
+  rejects(replace({ background: { ...photo, dim: -0.1 } }), /background\.dim must be 0–0\.6/)
+})
+
+test('a replace ad needs brand.json outro.cta for its close', () => {
+  rejects(replace(), /the close needs a call to action: set brand\.json outro\.cta/, brand)
+  validateSpec(replace(), 'ad.json', withOutro)
+})
+
+test('with the project, a replace ad must find its background and tool images in public/', () => {
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(process.env.TMPDIR ?? '/tmp'), 'promoreel-'))
+  try {
+    fs.writeFileSync(path.join(dir, 'brand.json'), JSON.stringify(withOutro))
+    fs.mkdirSync(path.join(dir, 'reels'))
+    fs.mkdirSync(path.join(dir, 'public', 'tools'), { recursive: true })
+    fs.writeFileSync(path.join(dir, 'reels', 'ad.json'), JSON.stringify(replace({ background: photo })))
+    assert.throws(() => pickReel(loadProject(dir), 'ad'), /ad\.json: tool 4 \("Paper forms"\): image "tools\/clipboard\.png" is not in public\//)
+    fs.writeFileSync(path.join(dir, 'public', 'tools', 'clipboard.png'), '')
+    assert.throws(() => pickReel(loadProject(dir), 'ad'), /the background's image "photo\.jpg" is not in public\//)
+    fs.writeFileSync(path.join(dir, 'public', 'photo.jpg'), '')
+    assert.equal(pickReel(loadProject(dir), 'ad').spec.id, 'ad')
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a replace ad renders one Replace video and still per format, named like a launch film', () => {
+  assert.deepEqual(outputNames(replace()), ['ad', 'ad-4x5', 'ad-1x1'])
+  assert.deepEqual(outputNames(replace({ formats: undefined })), ['ad'])
+  const jobs = renderJobs(project(withOutro), replace({ stillAt: 9 }))
+  assert.deepEqual(
+    jobs.map((j) => [j.style, j.composition, j.format, j.width, j.height, j.name, j.still]),
+    [
+      ['replace', 'Replace', '9x16', 1080, 1920, 'ad', { at: 9 }],
+      ['replace', 'Replace', '4x5', 1080, 1350, 'ad-4x5', { at: 9 }],
+      ['replace', 'Replace', '1x1', 1080, 1080, 'ad-1x1', { at: 9 }],
+    ],
+  )
+  const props = jobs[1].props as ResolvedReplace
+  assert.deepEqual([props.format, props.width, props.height, props.fps, props.brand.name, props.headline, props.background], ['4x5', 1080, 1350, 60, 'Acme', 'Replace all your\nteam tools', undefined])
+  assert.equal('background' in props, false)
+  // other styles take no still
+  assert.ok(renderJobs(project(), launch()).every((j) => j.still === undefined))
+})
+
+test('a replace background is measured once and its size goes into every format\'s props', () => {
+  const probed: string[] = []
+  const probe = (file: string) => (probed.push(file), { width: 1200, height: 1600 })
+  const jobs = renderJobs(project(withOutro), replace({ background: photo }), { probe })
+  assert.deepEqual(probed, ['/tmp/acme/public/photo.jpg'])
+  for (const j of jobs) assert.deepEqual((j.props as ResolvedReplace).background, { ...photo, size: { width: 1200, height: 1600 } })
+  assert.throws(() => renderJobs(project(withOutro), replace({ background: photo }), { probe: () => ({ width: 800, height: 1600 }) }), /ad: background\.screen corner \[900, 320\] is outside the image \(800×1600 px\)/)
+})
+
+test('resolveReplace: defaults to the first format, and needs the size when there is a background', () => {
+  const r = resolveReplace(replace({ formats: ['1x1', '9x16'] }), withOutro)
+  assert.deepEqual([r.format, r.width, r.height, r.fps], ['1x1', 1080, 1080, 60])
+  assert.equal(resolveReplace(replace({ fps: 30 }), withOutro, '9x16').fps, 30)
+  assert.throws(() => resolveReplace(replace({ background: photo }), withOutro, '9x16'), /ad: the background's size is needed/)
+  assert.deepEqual(resolveReplace(replace({ background: photo }), withOutro, '4x5', { width: 1080, height: 1920 }).background?.size, { width: 1080, height: 1920 })
+})
+
+test('the still: out/<name>.png beside the video, at stillAt seconds or the last frame', () => {
+  assert.equal(stillFile('/p/out/ad-4x5.mp4'), '/p/out/ad-4x5.png')
+  assert.equal(stillFile('/p/out/ad'), '/p/out/ad.png')
+  assert.equal(stillFrame(undefined, 60, 720), 719)
+  assert.equal(stillFrame(0, 60, 720), 0)
+  assert.equal(stillFrame(9, 60, 720), 540)
+  assert.equal(stillFrame(1.004, 60, 720), 60)
+  assert.equal(stillFrame(12, 60, 720), 719)
+  assert.equal(stillFrame(20, 60, 720), 719)
+})
+
+test('release attaches each replace video with its still; other styles attach videos only', () => {
+  assert.deepEqual(releaseFiles('/p/out', replace({ formats: ['9x16', '4x5'] })), ['/p/out/ad.mp4', '/p/out/ad.png', '/p/out/ad-4x5.mp4', '/p/out/ad-4x5.png'])
+  assert.deepEqual(releaseFiles('/p/out', launch({ formats: ['9x16', '1x1'] })), ['/p/out/launch.mp4', '/p/out/launch-1x1.mp4'])
+})
+
+test('a replace ad and another reel that render to the same file are refused when the project loads', () => {
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(process.env.TMPDIR ?? '/tmp'), 'promoreel-'))
+  try {
+    fs.writeFileSync(path.join(dir, 'brand.json'), JSON.stringify(withOutro))
+    fs.mkdirSync(path.join(dir, 'reels'))
+    fs.writeFileSync(path.join(dir, 'reels', 'a.json'), JSON.stringify(replace({ formats: ['4x5'] })))
+    fs.writeFileSync(path.join(dir, 'reels', 'b.json'), JSON.stringify({ id: 'ad-4x5', voice: { use: 'af_heart' }, lines: [], scenes: [] }))
+    assert.throws(() => loadProject(dir), /a\.json and b\.json both render to out\/ad-4x5\.mp4/)
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }

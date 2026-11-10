@@ -24,6 +24,7 @@ export async function captions(projectDir: string, opts: { reel?: string; voice?
   const p = loadProject(projectDir)
   const { spec } = pickReel(p, opts.reel)
   if (spec.style === 'launch') throw new Error(`${spec.id} is a launch film: it has no voice, so there is nothing to caption`)
+  if (spec.style === 'replace') throw new Error(`${spec.id} is a replace ad: it has no voice, so there is nothing to caption`)
   const r = spec.style === 'walk' ? spec : resolveSpec(spec, p.brand)
   const voice = opts.voice ?? r.voice.use
   const model = (r.captions?.model ?? 'base.en') as WhisperModel

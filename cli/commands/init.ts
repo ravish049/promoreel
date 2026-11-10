@@ -17,7 +17,7 @@ const slug = (s: string) =>
     .replace(/^-|-$/g, '') || 'app'
 
 /** Each style's starter files: template path → path in the project. */
-const FILES: Record<Style, [string, string][]> = {
+const FILES: Record<Exclude<Style, 'replace'>, [string, string][]> = {
   recorded: [
     ['brand.json', 'brand.json'],
     ['reels/first-reel.json', 'reels/first-reel.json'],
@@ -36,7 +36,7 @@ const FILES: Record<Style, [string, string][]> = {
   ],
 }
 
-const NEXT: Record<Style, string> = {
+const NEXT: Record<Exclude<Style, 'replace'>, string> = {
   recorded: 'edit flows/first-flow.flow.json',
   walk: 'describe your screens and script in reels/walk.json',
   launch: 'describe your screens in reels/launch.json',
@@ -48,6 +48,7 @@ export async function init(dirArg: string | undefined, opts: { name?: string; ur
   if (opts.style === '') throw new Error(`--style needs a value: one of ${STYLES.join(', ')}`)
   const style = (opts.style ?? 'recorded') as Style
   if (!STYLES.includes(style)) throw new Error(`--style must be one of ${STYLES.join(', ')} (got "${opts.style}")`)
+  if (style === 'replace') throw new Error('--style replace has no starter files yet: write reels/<id>.json by hand (see src/reel/spec.ts, ReplaceSpec)')
   const dir = path.resolve(dirArg)
   if (fs.existsSync(path.join(dir, 'brand.json')) && !opts.force) throw new Error(`${dirArg} already has a brand.json (use --force to overwrite the starter files)`)
   const name = opts.name ?? path.basename(dir)
