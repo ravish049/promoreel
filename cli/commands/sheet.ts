@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { step } from '../lib/progress'
-import { probeDuration, run } from '../lib/sh'
+import { probeDuration, probeSize, run } from '../lib/sh'
 
 const FONTS = ['/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/System/Library/Fonts/Helvetica.ttc', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'C:/Windows/Fonts/arialbd.ttf']
 
@@ -18,9 +18,12 @@ export function contactSheet(input: string, output: string, times?: number[], fr
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'promoreel-sheet-'))
   try {
     const font = FONTS.find((f) => fs.existsSync(f))
+    // a tile keeps the video's shape: 405×720 for 9:16 (as always), 720×405 for 16:9, 560×560 for 1:1
+    const { width, height } = probeSize(input)
+    const [tw, th] = width > height ? [720, Math.round((720 * height) / width / 2) * 2] : width === height ? [560, 560] : [405, 720]
     ts.forEach((t, i) => {
       const label = `${t.toFixed(1)} s`
-      const vf = hasDrawtext() && font ? `scale=405:720,pad=425:770:10:10:white,drawtext=fontfile='${font}':text='${label}':x=(w-tw)/2:y=740:fontsize=24:fontcolor=0x1C1C1E` : 'scale=405:720,pad=425:750:10:10:white'
+      const vf = hasDrawtext() && font ? `scale=${tw}:${th},pad=${tw + 20}:${th + 50}:10:10:white,drawtext=fontfile='${font}':text='${label}':x=(w-tw)/2:y=${th + 20}:fontsize=24:fontcolor=0x1C1C1E` : `scale=${tw}:${th},pad=${tw + 20}:${th + 30}:10:10:white`
       run('ffmpeg', ['-loglevel', 'error', '-y', '-ss', String(t), '-i', input, '-frames:v', '1', '-vf', vf, path.join(tmp, `${String(i).padStart(2, '0')}.png`)])
     })
     const cols = Math.ceil(ts.length / 2)

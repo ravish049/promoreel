@@ -4,9 +4,9 @@ import { guardStdout, emit, setProject } from './lib/progress'
 
 guardStdout()
 
-const HELP = `promoreel: vertical promo reels of your own web app (Remotion + free local voice and captions)
+const HELP = `promoreel: promo videos of your own web app (Remotion + free local voice, captions and music)
 
-  promoreel init <dir> [--name "My App"] [--url http://localhost:3000]   scaffold a project
+  promoreel init <dir> [--style walk|launch] [--name "My App"] [--url …] scaffold a project (recorded unless --style)
   promoreel record <project> [flow …] [--only clip,clip]                 film flows at phone size
   promoreel voice <project> [--reel id] [--voice name …]                  speak the script (Kokoro / Chatterbox)
   promoreel captions <project> [--reel id]                                word timings with Whisper
@@ -33,6 +33,7 @@ function parse(argv: string[]): Opts {
       const [k, v] = a.slice(2).split('=', 2)
       const isFlag = ['fresh', 'force', 'clobber', 'dry-run', 'no-sheet', 'json', 'pretty', 'help'].includes(k)
       const val = v ?? (isFlag ? true : argv[++i])
+      if (!isFlag && (val === undefined || val === '' || String(val).startsWith('--'))) throw new Error(`--${k} needs a value${k === 'style' ? ': --style walk, --style launch or --style recorded' : ''}`)
       if (multi.has(k)) o[k] = [...((o[k] as string[]) ?? []), String(val)]
       else o[k] = val
     } else (o._ as string[]).push(a)
@@ -54,7 +55,7 @@ async function main() {
   if (pos[0] && !['repo', 'sheet', 'list', 'init'].includes(cmd)) setProject(pos[0].replace(/\/$/, '').split('/').pop())
   switch (cmd) {
     case 'init':
-      return (await import('./commands/init')).init(pos[0], { name: str(o.name), url: str(o.url), force: !!o.force })
+      return (await import('./commands/init')).init(pos[0], { name: str(o.name), url: str(o.url), style: str(o.style), force: !!o.force })
     case 'record':
       return (await import('./commands/record')).record(pos[0], pos.slice(1), { only: str(o.only)?.split(',') })
     case 'voice':

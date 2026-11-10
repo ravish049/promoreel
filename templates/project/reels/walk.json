@@ -1,0 +1,104 @@
+{
+  "id": "walk",
+  "style": "walk",
+  "title": "{{NAME}}: feature walk",
+  "voice": { "use": "af_heart", "speed": 1.0 },
+  "captions": { "model": "base.en" },
+  "music": { "beatSync": true },
+  "hook": { "headline": "Requests, sorted", "sub": "from inbox to done" },
+  "close": { "title": "Request tracking for small teams.", "tagline": ["Requests in,", "work done."], "cta": "Try it · {{SLUG}}.com" },
+  "lines": [
+    { "id": "hook", "say": "Still chasing your team's requests | by email?", "text": "Still chasing your team's requests by email?" },
+    { "id": "inbox", "say": "Every request lands in one list, | and {{NAME}} assigns it for you.", "text": "Every request lands in one list, and {{NAME}} assigns it for you." },
+    { "id": "phone", "say": "Your team ticks it off | from their phone.", "text": "Your team ticks it off from their phone." },
+    { "id": "week", "say": "By Friday, | you can see what got done.", "text": "By Friday, you can see what got done." },
+    { "id": "close", "say": "{{NAME}}. | Requests in, | work done.", "text": "{{NAME}}. Requests in, work done." },
+    { "id": "cta", "say": "Try it free today.", "speed": 0.97 }
+  ],
+  "steps": [
+    {
+      "id": "inbox",
+      "label": "Inbox",
+      "icon": "list-checks",
+      "screen": {
+        "kind": "list",
+        "title": "New requests",
+        "subtitle": "Today · 4 waiting",
+        "icon": "list-checks",
+        "badge": "4 new",
+        "rows": [
+          { "initials": "AM", "title": "Update the price list", "subtitle": "From Alex · Sales", "tag": "Urgent", "tagTone": "accent" },
+          { "initials": "JR", "title": "Order printer paper", "subtitle": "From Jo · Office" },
+          { "initials": "SK", "title": "Fix the booking form", "subtitle": "From Sam · Web", "tag": "Bug", "tagTone": "highlight" },
+          { "initials": "LT", "title": "Plan the team lunch", "subtitle": "From Lee · Ops" }
+        ],
+        "button": { "label": "Assign all", "busy": "Assigning…", "done": "All assigned" }
+      },
+      "anchors": { "checkRows": { "word": "list" }, "click": { "word": "assigns" }, "done": { "word": "you" } }
+    },
+    {
+      "id": "phone",
+      "label": "On the go",
+      "icon": "smartphone",
+      "screen": {
+        "kind": "phone",
+        "statusBarTime": "9:41",
+        "screen": {
+          "kind": "list",
+          "title": "Fix the booking form",
+          "subtitle": "Assigned to you",
+          "rows": [
+            { "icon": "clock", "title": "Due today", "subtitle": "By 5 pm" },
+            { "icon": "users", "title": "Requested by Sam", "subtitle": "Web team" },
+            { "icon": "message-square", "title": "2 comments", "subtitle": "Latest 10 min ago" }
+          ]
+        },
+        "action": { "label": "Mark done", "icon": "check", "done": "Done" },
+        "tabs": [
+          { "label": "Tasks", "icon": "list-checks" },
+          { "label": "Chat", "icon": "message-square" },
+          { "label": "Team", "icon": "users" }
+        ]
+      },
+      "anchors": { "click": { "word": "off" }, "done": { "word": "phone" } }
+    },
+    {
+      "id": "week",
+      "label": "Your week",
+      "icon": "line-chart",
+      "screen": {
+        "kind": "stat",
+        "title": "This week",
+        "subtitle": "Mon – Fri · 6 people",
+        "icon": "line-chart",
+        "value": 42,
+        "from": 0,
+        "label": "requests closed"
+      },
+      "anchors": { "count": { "word": "Friday" }, "done": { "word": "done" } }
+    }
+  ],
+  "cuts": {
+    "long": {
+      "hook": { "lines": ["hook"], "minMs": 3000 },
+      "steps": [
+        { "step": "inbox", "lines": ["inbox"] },
+        { "step": "phone", "lines": ["phone"] },
+        { "step": "week", "lines": ["week"], "minMs": 3000 }
+      ],
+      "logo": {
+        "lines": ["close", "cta"],
+        "minMs": 4000,
+        "anchors": { "name": { "line": "close" }, "tagline": { "line": "close", "word": "Requests" }, "cta": { "line": "cta" } }
+      }
+    },
+    "short": {
+      "tracker": "title",
+      "steps": [
+        { "step": "inbox", "lines": ["inbox"] },
+        { "step": "phone", "lines": ["phone"] }
+      ],
+      "logo": { "lines": ["cta"], "minMs": 3000 }
+    }
+  }
+}

@@ -1,0 +1,589 @@
+{
+  "id": "walk",
+  "style": "walk",
+  "title": "Dispatch to invoice: a CrewDash feature walk",
+  "voice": {
+    "use": "chatterbox",
+    "chatterbox": {
+      "exaggeration": 0.55,
+      "cfgWeight": 0.45,
+      "seed": 7
+    }
+  },
+  "captions": {
+    "model": "small.en"
+  },
+  "music": {
+    "bpm": 112,
+    "beatSync": true
+  },
+  "hook": {
+    "headline": "runs your week",
+    "sub": "from dispatch to invoice"
+  },
+  "close": {
+    "tagline": [
+      "Every hour,",
+      "matched."
+    ],
+    "title": "Dispatch, timesheets, payroll and invoicing for small staffing agencies.",
+    "cta": "Book a demo · crewdash.ca"
+  },
+  "lines": [
+    {
+      "id": "open",
+      "say": "This is Crew Dash. | It runs your week, | from dispatch to invoice.",
+      "text": "This is CrewDash. It runs your week, from dispatch to invoice.",
+      "seed": 42
+    },
+    {
+      "id": "hook",
+      "say": "What if your whole week | ran itself?",
+      "text": "What if your whole week ran itself?"
+    },
+    {
+      "id": "dispatch",
+      "say": "Send a shift, | and your crew gets it on their phone.",
+      "text": "Send a shift, and your crew gets it on their phone.",
+      "seed": 11
+    },
+    {
+      "id": "gps",
+      "say": "They clock in by G P S, | right on site.",
+      "text": "They clock in by GPS, right on site."
+    },
+    {
+      "id": "sheet",
+      "say": "The client's sheet comes in? | Crew Dash reads it, | and checks it against your hours.",
+      "text": "The client's sheet comes in? CrewDash reads it, and checks it against your hours."
+    },
+    {
+      "id": "pay",
+      "say": "Weekly pay is ready to run, | no retyping.",
+      "text": "Weekly pay is ready to run, no retyping."
+    },
+    {
+      "id": "invoice",
+      "say": "And your invoice fills itself in.",
+      "text": "And your invoice fills itself in.",
+      "seed": 42
+    },
+    {
+      "id": "chain",
+      "say": "From dispatch to invoice, | your whole week, in one place.",
+      "text": "From dispatch to invoice, your whole week, in one place.",
+      "seed": 13
+    },
+    {
+      "id": "close",
+      "say": "It's Crew Dash. | Every hour, matched.",
+      "text": "It's CrewDash. Every hour, matched.",
+      "seed": 12
+    },
+    {
+      "id": "cta",
+      "say": "Book a demo, | at Crew Dash. | Dot C A.",
+      "text": "Book a demo at crewdash.ca",
+      "seed": 31
+    },
+    {
+      "id": "open-s",
+      "say": "This is Crew Dash, | from dispatch to invoice.",
+      "text": "This is CrewDash, from dispatch to invoice.",
+      "seed": 23
+    },
+    {
+      "id": "dispatch-s",
+      "say": "Send a shift | to your crew.",
+      "text": "Send a shift to your crew."
+    },
+    {
+      "id": "sheet-s",
+      "say": "Then, Crew Dash | checks the client's sheet.",
+      "text": "Then CrewDash checks the client's sheet."
+    },
+    {
+      "id": "invoice-s",
+      "say": "Pay runs, | and invoices fill themselves in.",
+      "text": "Pay runs, and invoices fill themselves in.",
+      "seed": 23
+    }
+  ],
+  "steps": [
+    {
+      "id": "dispatch",
+      "label": "Dispatch",
+      "icon": "send",
+      "screen": {
+        "kind": "list",
+        "title": "Dispatch",
+        "subtitle": "Bayview · Fri, Oct 16 · 7:00",
+        "icon": "send",
+        "badge": "Still to fill · 4",
+        "rows": [
+          {
+            "initials": "DO",
+            "title": "Daniel Okoye",
+            "subtitle": "JO-0006 · Cold-store loader",
+            "tag": "Available",
+            "tagTone": "success"
+          },
+          {
+            "initials": "LF",
+            "title": "Lena Fischer",
+            "subtitle": "JO-0006 · Cold-store loader",
+            "tag": "Available",
+            "tagTone": "success"
+          },
+          {
+            "initials": "PN",
+            "title": "Priya Nair",
+            "subtitle": "JO-0014 · Freezer loader",
+            "tag": "Available",
+            "tagTone": "success"
+          },
+          {
+            "initials": "MS",
+            "title": "Marco Silva",
+            "subtitle": "JO-0014 · Freezer loader",
+            "tag": "Available",
+            "tagTone": "success"
+          }
+        ],
+        "button": {
+          "label": "Offer the role",
+          "busy": "Sending…",
+          "done": "Booked · 4 of 4"
+        }
+      },
+      "anchors": {
+        "fill": {
+          "scene": "dispatch"
+        },
+        "click": {
+          "word": "shift",
+          "offsetMs": 100
+        },
+        "checkRows": {
+          "word": "and"
+        },
+        "done": {
+          "word": "phone",
+          "offsetMs": 250
+        }
+      }
+    },
+    {
+      "id": "gps",
+      "label": "GPS clock-in",
+      "icon": "map-pin",
+      "screen": {
+        "kind": "phone",
+        "statusBarTime": "6:58",
+        "screen": {
+          "kind": "list",
+          "title": "Today",
+          "subtitle": "Fri, Oct 16 · 7:00 – 15:00",
+          "rows": [
+            {
+              "icon": "clock",
+              "title": "Cold-store loader",
+              "subtitle": "Scheduled · $24.50/h"
+            },
+            {
+              "icon": "map-pin",
+              "title": "Bayview Cold Chain",
+              "subtitle": "80 Chiltech Rd · Dock 3"
+            },
+            {
+              "icon": "check-square",
+              "title": "On site",
+              "subtitle": "Inside the 250 m zone"
+            }
+          ]
+        },
+        "action": {
+          "label": "Clock in",
+          "icon": "map-pin",
+          "done": "On shift"
+        },
+        "tabs": [
+          {
+            "label": "Home",
+            "icon": "clock"
+          },
+          {
+            "label": "Earnings",
+            "icon": "banknote"
+          },
+          {
+            "label": "Messages",
+            "icon": "message-square"
+          }
+        ]
+      },
+      "anchors": {
+        "click": {
+          "word": "clock",
+          "offsetMs": 70
+        },
+        "done": {
+          "word": "site"
+        }
+      }
+    },
+    {
+      "id": "sheet",
+      "label": "Client sheet",
+      "icon": "sparkles",
+      "screen": {
+        "kind": "table",
+        "title": "Validate client sheet",
+        "subtitle": "Bayview Cold Chain · Oct 12 – Oct 18",
+        "icon": "sparkles",
+        "badge": "Read",
+        "columns": [
+          "Day",
+          "Ours",
+          "Client"
+        ],
+        "rows": [
+          [
+            "Mon Oct 12",
+            "8.0 h",
+            "8.0 h"
+          ],
+          [
+            "Tue Oct 13",
+            "8.0 h",
+            "6.0 h"
+          ],
+          [
+            "Wed Oct 14",
+            "8.0 h",
+            "8.0 h"
+          ],
+          [
+            "Thu Oct 15",
+            "8.0 h",
+            "8.0 h"
+          ],
+          [
+            "Fri Oct 16",
+            "8.0 h",
+            "8.0 h"
+          ]
+        ],
+        "compare": {
+          "columns": [
+            1,
+            2
+          ]
+        },
+        "summary": "Ours 40.0 h · client 38.0 h · 1 differs",
+        "button": {
+          "label": "Validate this week",
+          "busy": "Validating…",
+          "done": "Validated"
+        }
+      },
+      "anchors": {
+        "fill": {
+          "word": "sheet"
+        },
+        "checkRows": {
+          "word": "reads"
+        },
+        "click": {
+          "word": "against"
+        },
+        "done": {
+          "word": "hours",
+          "offsetMs": 350
+        }
+      }
+    },
+    {
+      "id": "pay",
+      "label": "Payroll",
+      "icon": "banknote",
+      "screen": {
+        "kind": "list",
+        "title": "Payroll run",
+        "subtitle": "Oct 12 – 18 · Pay day Fri, Oct 23",
+        "icon": "banknote",
+        "badge": "96 workers",
+        "rows": [
+          {
+            "initials": "DO",
+            "title": "Daniel Okoye",
+            "subtitle": "38.0 h",
+            "value": "$931.00"
+          },
+          {
+            "initials": "LF",
+            "title": "Lena Fischer",
+            "subtitle": "40.0 h",
+            "value": "$980.00"
+          },
+          {
+            "initials": "PN",
+            "title": "Priya Nair",
+            "subtitle": "44.0 h",
+            "value": "$1,078.00"
+          },
+          {
+            "initials": "MS",
+            "title": "Marco Silva",
+            "subtitle": "40.0 h",
+            "value": "$980.00"
+          }
+        ],
+        "button": {
+          "label": "Hours waiting",
+          "busy": "Checking hours…",
+          "done": "Ready to run"
+        }
+      },
+      "anchors": {
+        "fill": {
+          "scene": "pay"
+        },
+        "count": {
+          "word": "Weekly"
+        },
+        "checkRows": {
+          "word": "is"
+        },
+        "click": {
+          "word": "run"
+        },
+        "done": {
+          "word": "retyping",
+          "offsetMs": 150
+        }
+      }
+    },
+    {
+      "id": "invoice",
+      "label": "Invoice",
+      "icon": "file-text",
+      "screen": {
+        "kind": "form",
+        "title": "New invoice",
+        "subtitle": "Filled in from your validation",
+        "icon": "file-text",
+        "badge": "Ready",
+        "fields": [
+          {
+            "label": "Client",
+            "value": "Bayview Cold Chain"
+          },
+          {
+            "label": "Week",
+            "value": "Oct 12 – Oct 18, 2026 · Validated"
+          }
+        ],
+        "items": [
+          {
+            "label": "Cold-store loader · JO-0006",
+            "detail": "Daniel Okoye, Lena Fischer · 78.0 h",
+            "amount": "$2,418.00"
+          },
+          {
+            "label": "Freezer loader · JO-0014",
+            "detail": "Priya Nair, Marco Silva · 84.0 h",
+            "amount": "$2,604.00"
+          }
+        ],
+        "total": {
+          "label": "Total",
+          "value": "$5,022.00"
+        }
+      },
+      "anchors": {
+        "fill": {
+          "scene": "invoice"
+        },
+        "count": {
+          "word": "fills"
+        },
+        "done": {
+          "line": "chain",
+          "word": "From"
+        }
+      }
+    }
+  ],
+  "cuts": {
+    "long": {
+      "hook": {
+        "lines": [
+          "open",
+          "hook"
+        ],
+        "minMs": 5600,
+        "leadMs": 120,
+        "tailMs": 450
+      },
+      "steps": [
+        {
+          "step": "dispatch",
+          "lines": [
+            "dispatch"
+          ],
+          "minMs": 3200,
+          "tailMs": 550
+        },
+        {
+          "step": "gps",
+          "lines": [
+            "gps"
+          ],
+          "minMs": 3000,
+          "tailMs": 550
+        },
+        {
+          "step": "sheet",
+          "lines": [
+            "sheet"
+          ],
+          "minMs": 3400,
+          "tailMs": 900
+        },
+        {
+          "step": "pay",
+          "lines": [
+            "pay"
+          ],
+          "minMs": 3000,
+          "tailMs": 800
+        },
+        {
+          "step": "invoice",
+          "lines": [
+            "invoice",
+            "chain"
+          ],
+          "minMs": 3000,
+          "tailMs": 550
+        }
+      ],
+      "logo": {
+        "lines": [
+          "close",
+          "cta"
+        ],
+        "minMs": 4600,
+        "tailMs": 300,
+        "anchors": {
+          "name": {
+            "line": "close",
+            "word": "CrewDash"
+          },
+          "tagline": {
+            "line": "close",
+            "word": "Every"
+          },
+          "cta": {
+            "line": "cta"
+          }
+        }
+      }
+    },
+    "short": {
+      "tracker": "title",
+      "hook": {
+        "lines": [
+          "open-s"
+        ],
+        "minMs": 2600,
+        "leadMs": 100,
+        "tailMs": 350
+      },
+      "steps": [
+        {
+          "step": "dispatch",
+          "lines": [
+            "dispatch-s"
+          ],
+          "minMs": 3000,
+          "tailMs": 800,
+          "anchors": {
+            "fill": {
+              "scene": "dispatch"
+            },
+            "click": {
+              "word": "shift",
+              "offsetMs": 70
+            },
+            "checkRows": {
+              "word": "shift",
+              "offsetMs": 300
+            },
+            "done": {
+              "word": -1,
+              "offsetMs": 500
+            }
+          }
+        },
+        {
+          "step": "sheet",
+          "lines": [
+            "sheet-s"
+          ],
+          "minMs": 2200,
+          "tailMs": 800,
+          "anchors": {
+            "fill": {
+              "scene": "sheet"
+            },
+            "checkRows": {
+              "word": "CrewDash"
+            },
+            "click": {
+              "word": "client's"
+            },
+            "done": {
+              "word": -1,
+              "offsetMs": 400
+            }
+          }
+        },
+        {
+          "step": "invoice",
+          "lines": [
+            "invoice-s"
+          ],
+          "minMs": 2400,
+          "tailMs": 800,
+          "anchors": {
+            "fill": {
+              "scene": "invoice"
+            },
+            "count": {
+              "word": "fill"
+            },
+            "done": {
+              "word": "in",
+              "offsetMs": 300
+            }
+          }
+        }
+      ],
+      "logo": {
+        "lines": [
+          "cta"
+        ],
+        "minMs": 3000,
+        "tailMs": 300
+      }
+    }
+  },
+  "pace": {
+    "leadMs": 350,
+    "gapMs": 800,
+    "tailMs": 400,
+    "endHoldMs": 1000
+  }
+}
