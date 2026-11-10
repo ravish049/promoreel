@@ -86,6 +86,41 @@ export function tick(): Float32Array {
   return mul(out, env(n, 0.001, 0.02))
 }
 
+/**
+ * A felt marker scratching across paper: `strokes` back-and-forth strokes of band-passed noise filling `dur`, each
+ * swelling in and easing out with a short lift at the turn, a little brighter on the push than on the pull, with the
+ * grain of the paper in it. Peak 0.5 before the in-mix gain. Match `strokes` to the drawn scribble's.
+ */
+export function scribble(rng: Rng, dur: number, strokes = Math.max(3, Math.round(dur / 0.12))): Float32Array {
+  const n = len(dur)
+  const out = new Float32Array(n)
+  if (n === 0) return out
+  // two bands of paper noise: a body and a bright scratch; the mix shifts per stroke
+  const body = filter(rng.noise(n), { lo: 900, hi: 3200 })
+  const bright = filter(rng.noise(n), { lo: 3200, hi: 9000 })
+  // the paper's grain: slow random wobble on the level (noise low-passed at ~40 Hz)
+  const grain = filter(rng.noise(n), { hi: 40, order: 2 })
+  let gmax = 0
+  for (const v of grain) gmax = Math.max(gmax, Math.abs(v))
+  const per = n / strokes
+  for (let s = 0; s < strokes; s++) {
+    const i0 = Math.floor(s * per)
+    const i1 = Math.min(n, Math.floor((s + 1) * per))
+    const push = s % 2 === 0
+    const level = rng.uniform(0.75, 1)
+    const tilt = push ? rng.uniform(0.55, 0.75) : rng.uniform(0.3, 0.45)
+    for (let i = i0; i < i1; i++) {
+      const k = (i - i0) / Math.max(1, i1 - i0)
+      // in fast, held, out a little slower, and a lift at the turn (the last 12 % of the stroke)
+      const shape = Math.min(1, k / 0.08) * Math.min(1, Math.max(0, (0.88 - k) / 0.2)) ** 1.5
+      const speed = Math.sin(Math.PI * Math.min(1, k / 0.88)) ** 0.5
+      const g = 0.75 + 0.25 * (gmax > 0 ? grain[i] / gmax : 0)
+      out[i] = (body[i] * (1 - tilt) + bright[i] * tilt) * shape * (0.4 + 0.6 * speed) * level * g
+    }
+  }
+  return peakTo(mul(out, env(n, 0.004, 0.03)), 0.5)
+}
+
 function peakTo(a: Float32Array, peak: number): Float32Array {
   let m = 0
   for (const v of a) m = Math.max(m, Math.abs(v))

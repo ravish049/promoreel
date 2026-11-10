@@ -1,10 +1,11 @@
-// Unit tests for the music bed: ducking depth, the peak limit and determinism.   npx tsx --test cli/audio/synth.test.ts
+// Unit tests for the music bed (ducking depth, the peak limit, determinism) and the scribble effect.   npx tsx --test cli/audio/synth.test.ts
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { SR, addSine } from './dsp'
+import { Rng, SR, addSine, len } from './dsp'
+import { scribble } from './sfx'
 import { PEAK_DBFS, mixBed, writeBed, type AudioJob } from './synth'
 import { decodeWav } from './wav'
 
@@ -86,4 +87,26 @@ test('the same job gives a byte-identical WAV; another seed does not', () => {
   assert.ok(a.equals(b), 'two renders of one job differ')
   const c = fs.readFileSync(writeBed({ ...job, seed: 6 }, path.join(tmp, 'b3.wav')).path)
   assert.ok(!a.equals(c), 'a different seed should change the noise')
+})
+
+test('scribble is the asked length, peaks at 0.5, has sound in every stroke and repeats for a seed', () => {
+  for (const [dur, strokes] of [
+    [0.9, 8],
+    [1.4, undefined],
+  ] as const) {
+    const a = scribble(new Rng(3), dur, strokes)
+    assert.equal(a.length, len(dur))
+    let peak = 0
+    for (const v of a) peak = Math.max(peak, Math.abs(v))
+    assert.ok(Math.abs(peak - 0.5) < 1e-6, `peak ${peak}`)
+    // the middle of each stroke is not silent
+    const k = strokes ?? Math.round(dur / 0.12)
+    for (let s = 0; s < k; s++) {
+      const mid = Math.floor(((s + 0.4) * a.length) / k)
+      let e = 0
+      for (let i = mid - 200; i < mid + 200; i++) e = Math.max(e, Math.abs(a[i]))
+      assert.ok(e > 0.05, `stroke ${s} is silent`)
+    }
+    assert.deepEqual(scribble(new Rng(3), dur, strokes), a)
+  }
 })
