@@ -31,9 +31,22 @@ with an end frame that also works as the still.
 - `src/Root.tsx` registers `Replace` with its width and height taken from the format.
 - A throwaway spec (not committed) renders all three formats in both modes, plus stills. The contact sheets and stills
   pass the review checklist, and the loudness is −16 to −14 LUFS with a true peak at or below −1 dBFS.
+- Batch 1 review fixes:
+  - `probeMediaSize` honours JPEG EXIF orientation (it swaps the size for orientations 5–8), and the photo is drawn
+    upright. Tested with an Orientation=6 JPEG.
+  - `tools[].color` and `scribble.color` must be `#rgb` or `#rrggbb`, and `scribble.seed` an integer. Each fails with
+    a clear reason.
+  - The scribble sound's strokes follow `scribblePath().phases`, so the sound matches the drawing.
+  - The output-name clash check also covers stills (`.png`) and contact sheets (`-sheet.png`).
+  - The default tile colours are shifted away from well-known products' colours.
+  - One copy of each shared type and constant: `ToolIconName`, `ToolSpec`, `PitchScreen` and the background type come
+    from `src/reel/spec.ts`; `TOOL_ICONS` and the dim constants from `shared.ts`. The inner width is exported from
+    `Phone.tsx`. `background.size` is required, and the browser fallback that reads the size is removed.
+  - `PitchScreen` joins `InnerScreen`.
 - `npm run lint` and `npm test` pass, and the `examples/generic` video md5 is unchanged.
 
 ## Files
 - `src/replace/plan.ts`, `plan.test.ts`, `layout.ts`, `layout.test.ts`, `Replace.tsx`, `audio.ts`, `audio.test.ts`, `index.ts`
 - `src/motion/layout.ts`, `src/screens/inner.tsx`, `src/screens/index.ts`, `src/screens/Gallery.tsx`
 - `src/Root.tsx`, `cli/commands/render.ts`, `cli/commands/all.ts`, `cli/commands/studio.ts`
+- Review fixes: `cli/lib/project.ts`, `cli/lib/project.test.ts`, `cli/audio/sfx.ts`, `cli/audio/synth.ts`, `src/replace/parts/*`, `src/replace/PhotoScreen.tsx`, `src/replace/perspective.ts`, `src/reel/spec.ts`, `src/reel/shared.ts`, `src/screens/Phone.tsx`, `src/screens/timing.ts`, `src/walk/plan.ts`, `src/launch/plan.ts`

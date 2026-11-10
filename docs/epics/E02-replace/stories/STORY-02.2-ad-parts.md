@@ -9,7 +9,7 @@ across them, the phone's pitch screen, and a scribble sound.
   `spreadsheet, chat, phone, email, calendar, calculator, clipboard, notes, folder` (glyphs drawn in SVG, no third-party
   logos). It takes `color` and an optional `label` under the tile, and draws an `image` (public/ path) in the tile instead of
   a glyph. Default colours are a fixed neutral set in this file, not taken from any brand.
-- `src/replace/parts/scribble.ts` (pure): `scribblePath(box, seed, opts)` returns an SVG path that zigzags across a row
+- `src/replace/parts/scribblePath.ts` (pure): `scribblePath(box, seed, opts)` returns an SVG path that zigzags across a row
   box (6–10 strokes with jitter, a little overshoot at the ends, and a loop or two), plus its length. The same seed always
   gives the same path. Unit tests check that it is deterministic, that it stays within the box plus the overshoot, and
   that the stroke count stays in range.
@@ -24,5 +24,5 @@ across them, the phone's pitch screen, and a scribble sound.
 - `npm run lint` and `npm test` pass.
 
 ## Files
-- `src/replace/parts/ToolTile.tsx`, `glyphs.tsx`, `scribble.ts`, `scribble.test.ts`, `Scribble.tsx`, `Pitch.tsx`
+- `src/replace/parts/ToolTile.tsx`, `glyphs.tsx`, `scribblePath.ts`, `scribblePath.test.ts`, `Scribble.tsx`, `Pitch.tsx`
 - `cli/audio/sfx.ts`, `cli/audio/synth.test.ts`
